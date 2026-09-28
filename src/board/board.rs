@@ -12,6 +12,7 @@ use std::str::FromStr;
 pub struct Board {
     // 2D array bitboard[colour][piece]
     bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
+    piece_at: [[Option<Piece>; 8]; 8],
     turn: PieceColour,
     castling_rights: BitBoard,
     en_passant: BitBoard,
@@ -27,6 +28,7 @@ impl Board {
 
     pub fn from_fen(fen: &str) -> Result<Board, FenError> {
         let mut bitboards = [[BitBoard::EMPTY; PieceKind::COUNT]; PieceColour::COUNT];
+        let mut piece_at: [[Option<Piece>; 8]; 8] = [[None; 8]; 8];
 
         let mut fen_parts = fen.split_whitespace();
 
@@ -45,6 +47,7 @@ impl Board {
                     let piece = Piece::try_from(char)?;
                     bitboards[piece.colour as usize][piece.kind as usize]
                         .set(Square::new(row_idx, col_idx));
+                    piece_at[row_idx][col_idx] = Some(piece);
                     col_idx += 1;
                 }
             }
@@ -98,11 +101,34 @@ impl Board {
 
         Ok(Board {
             bitboards,
+            piece_at,
             turn,
             castling_rights,
             en_passant,
             halfmove_clock,
             fullmove_number,
         })
+    }
+
+    /// Places a piece on both the BitBoard and the `piece_at` array,
+    /// and ensures they stay in sync
+    fn set_piece(&mut self, piece: Piece, square: Square) {
+        self.bitboards[piece.colour as usize][piece.kind as usize].set(square);
+        self.piece_at[square.row()][square.col()] = Some(piece);
+    }
+
+    /// Removes a piece from both the BitBoard and the `piece_set` array,
+    /// and ensures they stay in sync
+    /// Piece must already be set
+    fn unset_piece(&mut self, square: Square) -> Piece {
+        let piece = self.piece_at[square.row()][square.col()]
+            .expect("trying to unset a piece from an empty square");
+        self.bitboards[piece.colour as usize][piece.kind as usize].unset(square);
+        self.piece_at[square.row()][square.col()] = None;
+        piece
+    }
+
+    pub fn get_piece(&self, square: Square) -> Option<Piece> {
+        self.piece_at[square.row()][square.col()]
     }
 }
