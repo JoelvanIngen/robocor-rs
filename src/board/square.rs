@@ -10,6 +10,7 @@ pub struct Square(u8);
 
 impl Square {
     pub fn new(row: usize, col: usize) -> Square {
+        debug_assert!(row < 8 && col < 8, "Square out of bounds");
         Square((row as u8) << 3 | (col as u8))
     }
 
