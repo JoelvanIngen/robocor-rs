@@ -1,3 +1,10 @@
+use crate::board::Board;
+
+mod board;
+mod error;
+
 fn main() {
-    println!("Hello, world!");
+    let board = Board::start_position();
+
+    println!("{:?}", board)
 }
