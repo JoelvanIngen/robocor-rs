@@ -1,17 +1,18 @@
-use crate::board::bitboard::BitBoard;
+use crate::board::Board;
 use crate::board::display::BOARD_DIVIDER;
 use crate::board::square::Square;
 use std::fmt::{Display, Formatter};
 
-impl Display for BitBoard {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl Display for Board {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         writeln!(f, "{BOARD_DIVIDER}")?;
         for row_idx in (0..8).rev() {
+            write!(f, "{} |", row_idx)?;
             for col_idx in 0..8 {
-                match self.is_set(Square::new(row_idx, col_idx)) {
-                    true => write!(f, " * |")?,
-                    false => write!(f, "   |")?,
-                };
+                match self.get_piece(Square::new(row_idx, col_idx)) {
+                    Some(piece) => write!(f, " {piece} |")?,
+                    None => write!(f, "   |")?,
+                }
             }
             writeln!(f)?;
             writeln!(f, "{BOARD_DIVIDER}")?;
