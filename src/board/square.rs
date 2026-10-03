@@ -8,10 +8,16 @@ use std::str::FromStr;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Square(u8);
 
+/// TODO: My `clever` row/col compression is literally the grid square index (0-63)
+///       We don't need the bit manipulation, we can let the compiler do that
 impl Square {
-    pub fn new(row: usize, col: usize) -> Square {
+    pub fn from_coords(row: usize, col: usize) -> Square {
         debug_assert!(row < 8 && col < 8, "Square out of bounds");
         Square((row as u8) << 3 | (col as u8))
+    }
+
+    pub fn from_index(index: usize) -> Square {
+        Square(index as u8)
     }
 
     pub fn row(&self) -> usize {
@@ -20,6 +26,10 @@ impl Square {
 
     pub fn col(&self) -> usize {
         (self.0 & 0b00_000_111) as usize
+    }
+
+    pub fn idx(&self) -> usize {
+        self.0 as usize
     }
 }
 
@@ -49,6 +59,6 @@ impl FromStr for Square {
             return Err(InvalidSquare(s.to_string()));
         }
 
-        Ok(Square::new(row, col))
+        Ok(Square::from_coords(row, col))
     }
 }

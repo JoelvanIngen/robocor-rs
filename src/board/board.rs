@@ -46,7 +46,7 @@ impl Board {
                 } else {
                     let piece = Piece::try_from(char)?;
                     bitboards[piece.colour as usize][piece.kind as usize]
-                        .set(Square::new(row_idx, col_idx));
+                        .set(Square::from_coords(row_idx, col_idx));
                     piece_at[row_idx][col_idx] = Some(piece);
                     col_idx += 1;
                 }
@@ -74,10 +74,10 @@ impl Board {
         let mut castling_rights = BitBoard::EMPTY;
         for castle in castling_rights_fen.chars() {
             match castle {
-                'Q' => castling_rights.set(Square::new(0, 0)),
-                'K' => castling_rights.set(Square::new(0, 7)),
-                'q' => castling_rights.set(Square::new(7, 0)),
-                'k' => castling_rights.set(Square::new(7, 7)),
+                'Q' => castling_rights.set(Square::from_coords(0, 0)),
+                'K' => castling_rights.set(Square::from_coords(0, 7)),
+                'q' => castling_rights.set(Square::from_coords(7, 0)),
+                'k' => castling_rights.set(Square::from_coords(7, 7)),
                 '-' => {}
                 c => return Err(InvalidCastlingRights(c)),
             }

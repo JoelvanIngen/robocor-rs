@@ -9,7 +9,7 @@ impl Display for Board {
         for row_idx in (0..8).rev() {
             write!(f, "{} |", row_idx)?;
             for col_idx in 0..8 {
-                match self.get_piece(Square::new(row_idx, col_idx)) {
+                match self.get_piece(Square::from_coords(row_idx, col_idx)) {
                     Some(piece) => write!(f, " {piece} |")?,
                     None => write!(f, "   |")?,
                 }
