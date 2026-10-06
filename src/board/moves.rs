@@ -2,6 +2,7 @@ use crate::board::square::Square;
 
 /// https://chessprogramming.org/Encoding_Moves
 /// Bits: promotion, capture, special 1, special 2
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(u8)]
 pub enum MoveKind {
     QuietMove = 0b0000,
@@ -21,6 +22,7 @@ pub enum MoveKind {
 }
 
 /// TODO: Optimise into single u16 (4 bits for MoveKind, 6 for `from`, 6 for `to`)
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Move {
     kind: MoveKind,
     from: Square,

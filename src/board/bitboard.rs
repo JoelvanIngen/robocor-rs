@@ -6,6 +6,9 @@ pub struct BitBoard(u64);
 
 impl BitBoard {
     pub const EMPTY: Self = Self(0);
+    pub const fn from_u64(value: u64) -> Self {
+        Self(value)
+    }
 
     pub fn count(&self) -> u32 {
         self.0.count_ones()
@@ -35,5 +38,30 @@ impl BitBoard {
     /// Make empty without instantiating new board
     pub fn empty(&mut self) {
         self.0 &= 0;
+    }
+
+    pub fn iter(&self) -> BitBoardIter {
+        BitBoardIter(self.0)
+    }
+}
+
+pub struct BitBoardIter(u64);
+
+impl Iterator for BitBoardIter {
+    type Item = Square;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.0 == 0 {
+            None
+        } else {
+            let idx = self.0.trailing_zeros() as usize;
+            self.0 &= self.0 - 1;
+            Some(Square::from_index(idx))
+        }
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        let count = self.0.count_ones() as usize;
+        (count, Some(count))
     }
 }
