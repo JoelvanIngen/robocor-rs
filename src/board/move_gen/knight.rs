@@ -73,19 +73,12 @@ mod tests {
 
     #[test]
     fn test_a1_empty() {
+        let orig_square = Square::from_coords(0, 0);
         let want = vec![
-            Move::new(
-                QuietMove,
-                Square::from_coords(0, 0),
-                Square::from_coords(2, 1),
-            ),
-            Move::new(
-                QuietMove,
-                Square::from_coords(0, 0),
-                Square::from_coords(1, 2),
-            ),
+            Move::new(QuietMove, orig_square, Square::from_coords(2, 1)),
+            Move::new(QuietMove, orig_square, Square::from_coords(1, 2)),
         ];
-        let got = get_pl_moves_knight(Square::from_coords(0, 0), BitBoard::EMPTY, BitBoard::EMPTY);
+        let got = get_pl_moves_knight(orig_square, BitBoard::EMPTY, BitBoard::EMPTY);
 
         assert_eq!(
             want.len(),
@@ -109,23 +102,16 @@ mod tests {
 
     #[test]
     fn test_a1_enemy_targets() {
+        let orig_square = Square::from_coords(0, 0);
         let want = vec![
-            Move::new(
-                Capture,
-                Square::from_coords(0, 0),
-                Square::from_coords(2, 1),
-            ),
-            Move::new(
-                Capture,
-                Square::from_coords(0, 0),
-                Square::from_coords(1, 2),
-            ),
+            Move::new(Capture, orig_square, Square::from_coords(2, 1)),
+            Move::new(Capture, orig_square, Square::from_coords(1, 2)),
         ];
         let mut enemy = BitBoard::EMPTY;
         enemy.set(Square::from_coords(1, 2));
         enemy.set(Square::from_coords(2, 1));
 
-        let got = get_pl_moves_knight(Square::from_coords(0, 0), BitBoard::EMPTY, enemy);
+        let got = get_pl_moves_knight(orig_square, BitBoard::EMPTY, enemy);
 
         assert_eq!(
             want.len(),
