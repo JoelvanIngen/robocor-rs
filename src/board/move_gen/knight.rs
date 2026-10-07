@@ -49,7 +49,7 @@ const fn pre_compute_knight_moves() -> [BitBoard; 64] {
 pub fn get_pl_moves_knight(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
     // Find potential from_coords knight squares
     let new_positions_bb = KNIGHT_MOVES[pos.idx()];
-    let mut moves = Vec::new();
+    let mut moves = Vec::with_capacity(KNIGHT_DELTAS.len());
 
     for new_pos in new_positions_bb.iter() {
         if friendly.is_set(new_pos) {
