@@ -57,7 +57,11 @@ mod tests {
         ];
         let got = get_pl_moves_king(orig_square, BitBoard::EMPTY, BitBoard::EMPTY);
 
-        assert_eq!(want, got, "move count mismatch: {got:?} vs {want:?}");
+        assert_eq!(
+            want.len(),
+            got.len(),
+            "move count mismatch: {got:?} vs {want:?}"
+        );
         for m in want {
             assert!(got.contains(&m), "missing move {m:?} in {got:?}");
         }
