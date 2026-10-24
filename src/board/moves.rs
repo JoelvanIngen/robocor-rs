@@ -24,9 +24,9 @@ pub enum MoveKind {
 /// TODO: Optimise into single u16 (4 bits for MoveKind, 6 for `from`, 6 for `to`)
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Move {
-    kind: MoveKind,
-    from: Square,
-    to: Square,
+    pub kind: MoveKind,
+    pub from: Square,
+    pub to: Square,
 }
 
 impl Move {
