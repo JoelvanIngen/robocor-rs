@@ -113,7 +113,7 @@ mod test {
 
     struct PawnTestCase {
         pos: &'static str,
-        color: PieceColour,
+        colour: PieceColour,
         friendly: &'static [&'static str],
         enemy: &'static [&'static str],
         ep: Option<&'static str>,
@@ -132,7 +132,7 @@ mod test {
         }
         let ep = case.ep.map(|s| Square::from_str(s).unwrap());
 
-        let got = get_pl_moves_pawn(pos, friendly, enemy, case.color, ep);
+        let got = get_pl_moves_pawn(pos, friendly, enemy, case.colour, ep);
         let want = case.expected_moves;
 
         assert_eq!(
@@ -150,7 +150,7 @@ mod test {
     fn test_push_double_push() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: White,
+            colour: White,
             friendly: &[],
             enemy: &[],
             ep: None,
@@ -174,7 +174,7 @@ mod test {
     fn test_push_double_push_capture() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: White,
+            colour: White,
             friendly: &[],
             enemy: &["d3", "f3"],
             ep: None,
@@ -208,7 +208,7 @@ mod test {
     fn test_blocked_double_push_friendly() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: White,
+            colour: White,
             friendly: &["e4"],
             enemy: &[],
             ep: None,
@@ -225,7 +225,7 @@ mod test {
     fn test_blocked_double_push_enemy() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: White,
+            colour: White,
             friendly: &[],
             enemy: &["e4"],
             ep: None,
@@ -242,7 +242,7 @@ mod test {
     fn test_blocked_push_enemy() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: White,
+            colour: White,
             friendly: &[],
             enemy: &["e3"],
             ep: None,
@@ -255,7 +255,7 @@ mod test {
     fn test_promotion_white() {
         run_pawn_test(PawnTestCase {
             pos: "e7",
-            color: White,
+            colour: White,
             friendly: &[],
             enemy: &[],
             ep: None,
@@ -287,7 +287,7 @@ mod test {
     fn test_promotion_black() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: Black,
+            colour: Black,
             friendly: &[],
             enemy: &[],
             ep: None,
@@ -321,7 +321,7 @@ mod test {
     fn test_promotion_blocked_white() {
         run_pawn_test(PawnTestCase {
             pos: "e7",
-            color: White,
+            colour: White,
             friendly: &["e8"],
             enemy: &[],
             ep: None,
@@ -332,7 +332,7 @@ mod test {
     fn test_promotion_blocked_black() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: Black,
+            colour: Black,
             friendly: &["e1"],
             enemy: &[],
             ep: None,
@@ -345,7 +345,7 @@ mod test {
     fn test_capture_promotion_white() {
         run_pawn_test(PawnTestCase {
             pos: "e7",
-            color: White,
+            colour: White,
             friendly: &["e8"],
             enemy: &["d8"],
             ep: None,
@@ -377,7 +377,7 @@ mod test {
     fn test_capture_promotion_black() {
         run_pawn_test(PawnTestCase {
             pos: "e2",
-            color: Black,
+            colour: Black,
             friendly: &["e1"],
             enemy: &["d1"],
             ep: None,
