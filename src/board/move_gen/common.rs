@@ -9,24 +9,24 @@ pub fn get_pl_moves_direction(
     friendly: BitBoard,
     enemy: BitBoard,
     dir: (i8, i8),
-    moves: &mut Vec<Move>,
-) {
+) -> Vec<Move> {
+    let mut moves = Vec::new();
     let mut pos = orig_pos;
     loop {
         let new_row = pos.row() as i8 + dir.0;
         let new_col = pos.col() as i8 + dir.1;
         pos = match is_within_board(new_row, new_col) {
             true => Square::from_coords(new_row as usize, new_col as usize),
-            false => return,
+            false => return moves,
         };
 
         if friendly.is_set(pos) {
-            return;
+            return moves;
         }
 
         if enemy.is_set(pos) {
             moves.push(Move::new(Capture, orig_pos, pos));
-            return;
+            return moves;
         }
 
         moves.push(Move::new(QuietMove, orig_pos, pos));

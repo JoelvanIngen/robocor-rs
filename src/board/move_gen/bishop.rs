@@ -13,7 +13,7 @@ const DIRECTIONS: [(i8, i8); 4] = [
 pub fn get_pl_moves_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
     let mut moves = vec![];
     for dir in DIRECTIONS {
-        get_pl_moves_direction(pos, friendly, enemy, dir, &mut moves);
+        moves.extend(get_pl_moves_direction(pos, friendly, enemy, dir));
     }
     moves
 }
