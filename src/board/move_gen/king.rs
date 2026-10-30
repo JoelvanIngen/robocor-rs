@@ -89,7 +89,7 @@ pub fn get_pl_moves_king(
     enemy: BitBoard,
     castling_options: Vec<Square>,
 ) -> Vec<Move> {
-    let targets = get_attacks_king(pos, friendly, enemy);
+    let targets = get_attacks_king(pos, friendly);
     let captures = targets & enemy;
     let quiets = targets & !enemy;
 
