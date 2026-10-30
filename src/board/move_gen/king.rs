@@ -15,6 +15,38 @@ const KING_DELTAS: [(i8, i8); 8] = [
     (1, 1),
 ];
 
+/// Squares that need to be unoccupied for castling
+const QUEENSIDE_CASTLE_SQUARES: [BitBoard; 2] = [
+    {
+        let mut bb = BitBoard::EMPTY;
+        bb.set(Square::from_coords(0, 1));
+        bb.set(Square::from_coords(0, 2));
+        bb.set(Square::from_coords(0, 3));
+        bb
+    },
+    {
+        let mut bb = BitBoard::EMPTY;
+        bb.set(Square::from_coords(7, 1));
+        bb.set(Square::from_coords(7, 2));
+        bb.set(Square::from_coords(7, 3));
+        bb
+    },
+];
+const KINGSIDE_CASTLE_SQUARES: [BitBoard; 2] = [
+    {
+        let mut bb = BitBoard::EMPTY;
+        bb.set(Square::from_coords(0, 5));
+        bb.set(Square::from_coords(0, 6));
+        bb
+    },
+    {
+        let mut bb = BitBoard::EMPTY;
+        bb.set(Square::from_coords(7, 5));
+        bb.set(Square::from_coords(7, 6));
+        bb
+    },
+];
+
 const KING_ATTACKS: [BitBoard; 64] = {
     let mut attacks = [BitBoard::EMPTY; 64];
 
@@ -73,12 +105,13 @@ fn get_pl_castling_moves(
 ) {
     let full_bb = friendly | enemy;
     for co in castling_options {
+        // This is very hacky, but white (row 0) will be 0
+        // and black (row 7) will be 1
+        // which corresponds to our data format
+        let colour_idx = co.row() % 2;
+
         // Make sure squares between king and rook are empty, we'll check later whether the squares are attacked
-        if co.col() == 0
-            && !full_bb.is_set(Square::from_coords(co.row(), 1))
-            && !full_bb.is_set(Square::from_coords(co.row(), 2))
-            && !full_bb.is_set(Square::from_coords(co.row(), 3))
-        {
+        if co.col() == 0 && QUEENSIDE_CASTLE_SQUARES[colour_idx] & full_bb == BitBoard::EMPTY {
             // Queenside
             moves.push(Move::new(
                 QueenCastle,
@@ -86,10 +119,7 @@ fn get_pl_castling_moves(
                 Square::from_coords(co.row(), 0),
             ));
         }
-        if co.col() == 7
-            && !full_bb.is_set(Square::from_coords(co.row(), 6))
-            && !full_bb.is_set(Square::from_coords(co.row(), 5))
-        {
+        if co.col() == 7 && KINGSIDE_CASTLE_SQUARES[colour_idx] & full_bb == BitBoard::EMPTY {
             // Kingside
             moves.push(Move::new(KingCastle, pos, Square::from_coords(co.row(), 7)));
         }
