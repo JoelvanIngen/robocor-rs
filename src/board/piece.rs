@@ -62,6 +62,12 @@ pub struct Piece {
     pub colour: PieceColour,
 }
 
+impl Piece {
+    pub fn new(kind: PieceKind, colour: PieceColour) -> Self {
+        Self { kind, colour }
+    }
+}
+
 impl TryFrom<char> for Piece {
     type Error = FenError;
 
