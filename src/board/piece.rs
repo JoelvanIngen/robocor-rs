@@ -45,6 +45,15 @@ impl PieceColour {
     pub const COUNT: usize = 2;
 }
 
+impl PieceColour {
+    pub fn other(self) -> PieceColour {
+        match self {
+            White => Black,
+            Black => White,
+        }
+    }
+}
+
 impl TryFrom<char> for PieceColour {
     type Error = FenError;
 
