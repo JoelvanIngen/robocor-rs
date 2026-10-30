@@ -47,7 +47,7 @@ const KINGSIDE_CASTLE_SQUARES: [BitBoard; 2] = [
     },
 ];
 
-const KING_ATTACKS: [BitBoard; 64] = {
+pub const KING_ATTACKS: [BitBoard; 64] = {
     let mut attacks = [BitBoard::EMPTY; 64];
 
     let mut i = 0;
