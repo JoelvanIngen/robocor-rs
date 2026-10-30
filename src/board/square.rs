@@ -2,29 +2,38 @@ use crate::error::NotationError;
 use crate::error::NotationError::{InvalidNotation, InvalidSquare};
 use std::str::FromStr;
 
-/// Bits 0-1: unused
-/// Bits 2-5: row (1-8)
-/// Bits 6-8: col (A-H)
+/// Pre-init all squares on the board for cheap iteration
+pub const BOARD_SQUARES: [Square; 64] = {
+    let mut squares = [Square::from_index(0); 64];
+    let mut i = 0;
+    while i < 64 {
+        let square = Square::from_index(i);
+        squares[i] = square;
+        i += 1;
+    }
+    squares
+};
+
+/// row * 8 + col
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Square(u8);
 
-/// TODO: My `clever` row/col compression is literally the grid square index (0-63)
-///       We don't need the bit manipulation, we can let the compiler do that
 impl Square {
-    pub fn from_coords(row: usize, col: usize) -> Square {
+    pub const fn from_coords(row: usize, col: usize) -> Square {
         debug_assert!(row < 8 && col < 8, "Square out of bounds");
-        Square((row as u8) << 3 | (col as u8))
+        Square::from_index(row * 8 + col)
     }
 
-    pub fn from_index(index: usize) -> Square {
+    pub const fn from_index(index: usize) -> Square {
+        debug_assert!(index < 64, "Square out of bounds");
         Square(index as u8)
     }
 
-    pub fn row(&self) -> usize {
+    pub const fn row(&self) -> usize {
         (self.0 >> 3) as usize
     }
 
-    pub fn col(&self) -> usize {
+    pub const fn col(&self) -> usize {
         (self.0 & 0b00_000_111) as usize
     }
 
