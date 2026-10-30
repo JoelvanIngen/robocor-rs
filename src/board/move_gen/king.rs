@@ -21,29 +21,28 @@ pub fn get_pl_moves_king(
     enemy: BitBoard,
     castling_options: Vec<Square>,
 ) -> Vec<Move> {
-    let mut moves = Vec::with_capacity(KING_DELTAS.len());
-
-    for delta in KING_DELTAS {
-        let new_row = pos.row() as i8 + delta.0;
-        if !(0..8).contains(&new_row) {
-            continue;
-        }
-        let new_col = pos.col() as i8 + delta.1;
-        if !(0..8).contains(&new_col) {
-            continue;
-        }
-        let new_pos = Square::from_coords(new_row as usize, new_col as usize);
-        if friendly.is_set(new_pos) {
-            continue;
-        }
-
-        let move_kind = match enemy.is_set(new_pos) {
-            true => Capture,
-            false => QuietMove,
-        };
-
-        moves.push(Move::new(move_kind, pos, new_pos));
-    }
+    let mut moves = KING_DELTAS
+        .iter()
+        // Generate all new candidate positions
+        .map(|delta| [pos.row() as i8 + delta.0, pos.col() as i8 + delta.1])
+        // Ensure candidates are within board
+        .filter(|p| (0..8).contains(&p[0]) && (0..8).contains(&p[1]))
+        // Convert to square types
+        .map(|p| Square::from_coords(p[0] as usize, p[1] as usize))
+        // Drop squares occupied by friendly piece
+        .filter(|s| !friendly.is_set(*s))
+        // Convert to move; capture if occupied by enemy
+        .map(|new_pos| {
+            Move::new(
+                match enemy.is_set(new_pos) {
+                    true => Capture,
+                    false => QuietMove,
+                },
+                pos,
+                new_pos,
+            )
+        })
+        .collect();
 
     get_pl_castling_moves(&mut moves, pos, friendly, enemy, castling_options);
 
