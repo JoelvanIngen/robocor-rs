@@ -15,34 +15,49 @@ const KING_DELTAS: [(i8, i8); 8] = [
     (1, 1),
 ];
 
+const KING_ATTACKS: [BitBoard; 64] = {
+    let mut attacks = [BitBoard::EMPTY; 64];
+
+    let mut i = 0;
+    while i < 64 {
+        let pos = Square::from_index(i);
+        let mut bb = BitBoard::EMPTY;
+
+        let mut d = 0;
+        while d < KING_DELTAS.len() {
+            let (dr, dc) = KING_DELTAS[d];
+            let r = pos.row() as i8 + dr;
+            let c = pos.col() as i8 + dc;
+
+            if r >= 0 && r < 8 && c >= 0 && c < 8 {
+                let target = Square::from_coords(r as usize, c as usize);
+                bb.set(target);
+            }
+
+            d += 1;
+        }
+
+        attacks[i] = bb;
+        i += 1;
+    }
+
+    attacks
+};
+
 pub fn get_pl_moves_king(
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
     castling_options: Vec<Square>,
 ) -> Vec<Move> {
-    let mut moves = KING_DELTAS
-        .iter()
-        // Generate all new candidate positions
-        .map(|delta| [pos.row() as i8 + delta.0, pos.col() as i8 + delta.1])
-        // Ensure candidates are within board
-        .filter(|p| (0..8).contains(&p[0]) && (0..8).contains(&p[1]))
-        // Convert to square types
-        .map(|p| Square::from_coords(p[0] as usize, p[1] as usize))
-        // Drop squares occupied by friendly piece
-        .filter(|s| !friendly.is_set(*s))
-        // Convert to move; capture if occupied by enemy
-        .map(|new_pos| {
-            Move::new(
-                match enemy.is_set(new_pos) {
-                    true => Capture,
-                    false => QuietMove,
-                },
-                pos,
-                new_pos,
-            )
-        })
-        .collect();
+    let targets = KING_ATTACKS[pos.idx()] & !friendly;
+    let captures = targets & enemy;
+    let quiets = targets & !enemy;
+
+    let capture_moves = captures.iter().map(|to| Move::new(Capture, pos, to));
+    let quiet_moves = quiets.iter().map(|to| Move::new(QuietMove, pos, to));
+
+    let mut moves = capture_moves.chain(quiet_moves).collect();
 
     get_pl_castling_moves(&mut moves, pos, friendly, enemy, castling_options);
 
