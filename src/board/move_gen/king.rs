@@ -1,7 +1,7 @@
 use crate::board::Square;
 use crate::board::bitboard::BitBoard;
 use crate::board::moves::Move;
-use crate::board::moves::MoveKind::{Capture, QuietMove};
+use crate::board::moves::MoveKind::{Capture, KingCastle, QueenCastle, QuietMove};
 
 const KING_DELTAS: [(i8, i8); 8] = [
     // (ROW, COL)
@@ -15,7 +15,12 @@ const KING_DELTAS: [(i8, i8); 8] = [
     (1, 1),
 ];
 
-pub fn get_pl_moves_king(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
+pub fn get_pl_moves_king(
+    pos: Square,
+    friendly: BitBoard,
+    enemy: BitBoard,
+    castling_options: Vec<Square>,
+) -> Vec<Move> {
     let mut moves = Vec::with_capacity(KING_DELTAS.len());
 
     for delta in KING_DELTAS {
@@ -40,7 +45,41 @@ pub fn get_pl_moves_king(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Ve
         moves.push(Move::new(move_kind, pos, new_pos));
     }
 
+    get_pl_castling_moves(&mut moves, pos, friendly, enemy, castling_options);
+
     moves
+}
+
+fn get_pl_castling_moves(
+    moves: &mut Vec<Move>,
+    pos: Square,
+    friendly: BitBoard,
+    enemy: BitBoard,
+    castling_options: Vec<Square>,
+) {
+    let full_bb = friendly | enemy;
+    for co in castling_options {
+        // Make sure squares between king and rook are empty, we'll check later whether the squares are attacked
+        if co.col() == 0
+            && !full_bb.is_set(Square::from_coords(co.row(), 1))
+            && !full_bb.is_set(Square::from_coords(co.row(), 2))
+            && !full_bb.is_set(Square::from_coords(co.row(), 3))
+        {
+            // Queenside
+            moves.push(Move::new(
+                QueenCastle,
+                pos,
+                Square::from_coords(co.row(), 0),
+            ));
+        }
+        if co.col() == 7
+            && !full_bb.is_set(Square::from_coords(co.row(), 6))
+            && !full_bb.is_set(Square::from_coords(co.row(), 5))
+        {
+            // Kingside
+            moves.push(Move::new(KingCastle, pos, Square::from_coords(co.row(), 7)));
+        }
+    }
 }
 
 #[cfg(test)]
@@ -55,7 +94,7 @@ mod tests {
             Move::new(QuietMove, orig_square, Square::from_coords(1, 0)),
             Move::new(QuietMove, orig_square, Square::from_coords(1, 1)),
         ];
-        let got = get_pl_moves_king(orig_square, BitBoard::EMPTY, BitBoard::EMPTY);
+        let got = get_pl_moves_king(orig_square, BitBoard::EMPTY, BitBoard::EMPTY, vec![]);
 
         assert_eq!(
             want.len(),
@@ -75,7 +114,7 @@ mod tests {
         friendly.set(Square::from_coords(1, 0));
         friendly.set(Square::from_coords(1, 1));
 
-        let moves = get_pl_moves_king(orig_square, friendly, BitBoard::EMPTY);
+        let moves = get_pl_moves_king(orig_square, friendly, BitBoard::EMPTY, vec![]);
         assert_eq!(moves.len(), 0, "is moving through friendly pieces");
     }
 
@@ -93,7 +132,59 @@ mod tests {
             Move::new(Capture, orig_square, Square::from_coords(1, 0)),
             Move::new(Capture, orig_square, Square::from_coords(1, 1)),
         ];
-        let got = get_pl_moves_king(orig_square, friendly, enemy);
+        let got = get_pl_moves_king(orig_square, friendly, enemy, vec![]);
+
+        assert_eq!(want.len(), got.len());
+        for m in want {
+            assert!(got.contains(&m), "missing move {m:?} in {got:?}");
+        }
+    }
+
+    // Ability to castle when nothing is in the way
+    #[test]
+    fn test_castling_flags_not_blocked() {
+        let orig_square = Square::from_coords(0, 4);
+        let friendly = BitBoard::EMPTY;
+        let enemy = BitBoard::EMPTY;
+
+        let want = vec![
+            Move::new(QueenCastle, orig_square, Square::from_coords(0, 0)),
+            Move::new(KingCastle, orig_square, Square::from_coords(0, 7)),
+        ];
+        let mut got = vec![];
+        get_pl_castling_moves(
+            &mut got,
+            orig_square,
+            friendly,
+            enemy,
+            vec![Square::from_coords(0, 0), Square::from_coords(0, 7)],
+        );
+
+        assert_eq!(want.len(), got.len());
+        for m in want {
+            assert!(got.contains(&m), "missing move {m:?} in {got:?}");
+        }
+    }
+
+    // Ability to castle when some friendly piece blocks the move
+    #[test]
+    fn test_castling_flags_blocked() {
+        let orig_square = Square::from_coords(0, 4);
+        let mut friendly = BitBoard::EMPTY;
+        let enemy = BitBoard::EMPTY;
+
+        friendly.set(Square::from_coords(0, 1));
+        friendly.set(Square::from_coords(0, 5));
+
+        let want = vec![];
+        let mut got = vec![];
+        get_pl_castling_moves(
+            &mut got,
+            orig_square,
+            friendly,
+            enemy,
+            vec![Square::from_coords(0, 0), Square::from_coords(0, 7)],
+        );
 
         assert_eq!(want.len(), got.len());
         for m in want {
