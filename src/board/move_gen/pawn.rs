@@ -22,6 +22,24 @@ const CAPTURE_PROMOTION_VARIANTS: [MoveKind; 4] = [
     QueenPromotionCapture,
 ];
 
+pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) -> BitBoard {
+    let rd = match colour {
+        White => 1,
+        Black => -1,
+    };
+
+    let mut bb = BitBoard::EMPTY;
+    if pos.col() == 0 {
+        bb.set(Square::from_coords(pos.row() + rd as usize, 1))
+    } else if pos.col() == 7 {
+        bb.set(Square::from_coords(pos.row() + rd as usize, 6))
+    } else {
+        bb.set(Square::from_coords(pos.row() + rd as usize, pos.col() + 1));
+        bb.set(Square::from_coords(pos.row() + rd as usize, pos.col() - 1));
+    }
+    bb & !friendly // Technically unnecessary, probably
+}
+
 pub fn get_pl_moves_pawn(
     pos: Square,
     friendly: BitBoard,

@@ -10,6 +10,18 @@ const DIRECTIONS: [(i8, i8); 4] = [
     (1, 1),
 ];
 
+pub fn get_attacks_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
+    // Wrong way around (ideally we compute bitboard cheap instead of computing entire moves)
+    // but that's optimising for later
+    DIRECTIONS
+        .iter()
+        .flat_map(|dir| get_pl_moves_direction(pos, friendly, enemy, *dir))
+        .fold(BitBoard::EMPTY, |mut bb, m| {
+            bb.set(m.to);
+            bb
+        })
+}
+
 pub fn get_pl_moves_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
     let mut moves = vec![];
     for dir in DIRECTIONS {

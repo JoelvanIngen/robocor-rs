@@ -46,6 +46,13 @@ const fn pre_compute_knight_moves() -> [BitBoard; 64] {
     bitboards
 }
 
+pub fn get_attacks_knight(pos: Square, friendly: BitBoard) -> BitBoard {
+    // `& !friendly` might not matter as the presence of a friendly piece
+    // means no enemy piece is present
+    // I'll keep it for the time being but removing might save two operations
+    KNIGHT_MOVES[pos.idx()] & !friendly
+}
+
 pub fn get_pl_moves_knight(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
     // Find potential from_coords knight squares
     let new_positions_bb = KNIGHT_MOVES[pos.idx()];
