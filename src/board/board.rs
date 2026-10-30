@@ -1,4 +1,6 @@
 use crate::board::bitboard::BitBoard;
+use crate::board::moves::Move;
+use crate::board::moves::MoveKind::{KingCastle, QueenCastle};
 use crate::board::piece::{Piece, PieceColour, PieceKind};
 use crate::board::square::Square;
 use crate::error::FenError;
@@ -130,5 +132,125 @@ impl Board {
 
     pub fn get_piece(&self, square: Square) -> Option<Piece> {
         self.piece_at[square.row()][square.col()]
+    }
+
+    pub fn get_pieces(&self) -> Vec<Piece> {
+        let mut pieces = Vec::with_capacity(32);
+        for piece in self.piece_at.iter().flatten() {
+            if let Some(piece) = piece {
+                pieces.push(*piece);
+            }
+        }
+        pieces
+    }
+
+    pub fn get_pieces_by_colour(&self, colour: PieceColour) -> Vec<Piece> {
+        let mut pieces = Vec::with_capacity(32);
+        for piece in self.piece_at.iter().flatten() {
+            if let Some(piece) = piece {
+                pieces.push(*piece);
+            }
+        }
+        pieces
+    }
+
+    pub fn apply_move(&mut self, m: Move) {
+        let moving_piece = match self.piece_at[m.from.row()][m.from.col()] {
+            Some(piece) => piece,
+            None => {
+                panic!("Moving piece could not be located on board on its square")
+            }
+        };
+
+        if m.kind == KingCastle || m.kind == QueenCastle {
+            todo!("Implement castling move (both king and castle move)");
+        }
+
+        // Remove captured piece if applicable
+        if let Some(taken_piece) = self.piece_at[m.to.row()][m.to.col()] {
+            // Bitboard
+            self.get_mut_bitboard(taken_piece)
+                .unset(Square::from_coords(m.from.row(), m.from.col()));
+
+            // Pieces
+            self.piece_at[m.to.row()][m.to.col()] = None;
+        }
+
+        // Move piece
+        // Bitboard
+        let bitboard = self.get_mut_bitboard(moving_piece);
+        bitboard.unset(Square::from_coords(m.from.row(), m.from.col()));
+        bitboard.set(Square::from_coords(m.to.row(), m.to.col()));
+
+        // Pieces
+        self.piece_at[m.from.row()][m.from.col()] = None;
+        debug_assert_eq!(self.piece_at[m.to.row()][m.to.col()], None);
+        self.piece_at[m.to.row()][m.to.col()] = Some(moving_piece);
+    }
+
+    pub fn en_passant_square(&self) -> Option<Square> {
+        match self.en_passant {
+            BitBoard::EMPTY => None,
+            bb => Some(bb.get_square()),
+        }
+    }
+
+    pub fn get_colour_bitboard(&self, colour: PieceColour) -> BitBoard {
+        combine_bitboards(self.bitboards[colour as usize])
+    }
+
+    pub fn get_bitboard(&self, piece: Piece) -> BitBoard {
+        self.bitboards[piece.colour as usize][piece.kind as usize]
+    }
+
+    fn get_mut_bitboard(&mut self, piece: Piece) -> &mut BitBoard {
+        &mut self.bitboards[piece.colour as usize][piece.kind as usize]
+    }
+
+    pub fn get_castling_rights(&self, colour: PieceColour) -> Vec<Square> {
+        let mut options = Vec::with_capacity(2);
+        match colour {
+            PieceColour::White => {
+                let queenside = Square::from_coords(0, 0);
+                let kingside = Square::from_coords(0, 7);
+                if self.castling_rights.is_set(queenside) {
+                    options.push(queenside);
+                }
+                if self.castling_rights.is_set(kingside) {
+                    options.push(kingside);
+                }
+            }
+            PieceColour::Black => {
+                let queenside = Square::from_coords(7, 0);
+                let kingside = Square::from_coords(7, 7);
+                if self.castling_rights.is_set(queenside) {
+                    options.push(queenside);
+                }
+                if self.castling_rights.is_set(kingside) {
+                    options.push(kingside);
+                }
+            }
+        }
+        options
+    }
+}
+
+fn combine_bitboards(bitboards: [BitBoard; 6]) -> BitBoard {
+    let mut res = BitBoard::EMPTY;
+    for bb in bitboards {
+        res |= bb;
+    }
+    res
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::board::Board;
+
+    // New board returns 32 pieces
+    #[test]
+    fn count_pieces_new_board() {
+        let board = Board::start_position();
+        assert_eq!(board.get_pieces().len(), 32);
     }
 }
