@@ -66,9 +66,11 @@ pub fn executor(engine_tx: Sender<EngineTask>, engine_rx: Receiver<String>) {
                 println!("id name RoboCor 0.1");
                 println!("id author JoelvanIngen");
                 println!("uciok");
+                stdout().flush().unwrap();
             }
             Command::IsReady => {
                 println!("readyok");
+                stdout().flush().unwrap();
             }
             Command::Go(options) => {
                 engine_tx
