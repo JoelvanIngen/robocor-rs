@@ -1,14 +1,14 @@
-use crate::engine::EngineTask;
 use std::io::{BufRead, Write, stdin, stdout};
 use std::process::exit;
 use std::str::SplitWhitespace;
 use std::sync::mpsc::{Receiver, Sender, channel};
 use std::thread::spawn;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Command {
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Command {
     Uci,
     IsReady,
+    Position(PositionOptions),
     Go(GoOptions),
     Unknown,
 }
@@ -16,6 +16,12 @@ enum Command {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GoOptions {
     Infinite,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PositionOptions {
+    StartPos,
+    Fen(String),
 }
 
 impl Command {
@@ -29,6 +35,7 @@ impl Command {
         match cmd {
             "uci" => Command::Uci,
             "isready" => Command::IsReady,
+            "position" => Command::Position(PositionOptions::parse(&mut tokens)),
             "go" => Command::Go(GoOptions::parse(&mut tokens)),
             _ => Command::Unknown,
         }
@@ -52,7 +59,28 @@ impl GoOptions {
     }
 }
 
-pub fn executor(engine_tx: Sender<EngineTask>, engine_rx: Receiver<String>) {
+impl PositionOptions {
+    fn parse(opts: &mut SplitWhitespace) -> Self {
+        let subcommand = opts.next();
+        match subcommand {
+            Some("startpos") => PositionOptions::StartPos,
+            Some("fen") => {
+                let fen = opts.take(6).collect::<String>();
+                PositionOptions::Fen(fen)
+            }
+            Some(s) => {
+                println!("unknown 'startpos' subcommand: {}", s);
+                exit(1);
+            }
+            None => {
+                println!("expected subcommand after 'startpos'");
+                exit(1);
+            }
+        }
+    }
+}
+
+pub fn executor(engine_tx: Sender<Command>, engine_rx: Receiver<String>) {
     let (uci_tx, uci_rx) = channel::<String>();
     spawn(move || {
         input_loop(uci_tx);
@@ -72,15 +100,11 @@ pub fn executor(engine_tx: Sender<EngineTask>, engine_rx: Receiver<String>) {
                 println!("readyok");
                 stdout().flush().unwrap();
             }
-            Command::Go(options) => {
-                engine_tx
-                    .send(EngineTask { kind: options })
-                    .expect("failed to send engine task");
-            }
             Command::Unknown => {
                 println!("unknown command: {}", line);
                 exit(1);
             }
+            cmd => engine_tx.send(cmd).expect("failed to send engine task"),
         }
     }
 }
