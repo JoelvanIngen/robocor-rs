@@ -1,4 +1,7 @@
 mod board;
 mod error;
+mod uci;
 
-fn main() {}
+fn main() {
+    uci::executor()
+}
