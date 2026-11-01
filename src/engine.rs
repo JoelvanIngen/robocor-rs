@@ -1,8 +1,10 @@
 use crate::board::Board;
+use crate::error::FenError;
 use crate::uci::Command::{Go, Position};
 use crate::uci::GoOptions::Infinite;
 use crate::uci::PositionOptions::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
+use std::process::exit;
 use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 
@@ -47,8 +49,19 @@ impl Engine {
 
     fn handle_position(&mut self, opts: PositionOptions) {
         match opts {
-            Fen(fen) => todo!("parse fen into board"),
-            StartPos => todo!("init board from start"),
+            Fen(fen) => {
+                self.board = Some(
+                    Board::from_fen(fen.as_str()).unwrap_or_else(|e| self.handle_error(fen, e)),
+                )
+            }
+            StartPos => self.board = Some(Board::start_position()),
         }
+    }
+
+    fn handle_error(&mut self, fen: String, e: FenError) -> ! {
+        self.uci_tx
+            .send(format!("invalid fen {fen}: {:?}", e))
+            .expect("failed send fen error message from engine to uci");
+        exit(1);
     }
 }
