@@ -162,17 +162,27 @@ impl Board {
             }
         };
 
-        if m.kind == KingCastle || m.kind == QueenCastle {
-            todo!("Implement castling move (both king and castle move)");
-        }
+        if m.kind == KingCastle {
+            let row = m.from.row();
+            let king = self.unset_piece(Square::from_coords(row, 4));
+            let rook = self.unset_piece(Square::from_coords(row, 7));
+            self.set_piece(king, Square::from_coords(row, 6));
+            self.set_piece(rook, Square::from_coords(row, 5));
+        } else if m.kind == QueenCastle {
+            let row = m.from.row();
+            let king = self.unset_piece(Square::from_coords(row, 4));
+            let rook = self.unset_piece(Square::from_coords(row, 0));
+            self.set_piece(king, Square::from_coords(row, 2));
+            self.set_piece(rook, Square::from_coords(row, 3));
+        } else {
+            // Remove captured piece if applicable
+            if m.is_capture() {
+                self.unset_piece(m.to);
+            }
 
-        // Remove captured piece if applicable
-        if m.is_capture() {
-            self.unset_piece(m.to);
+            self.unset_piece(m.from);
+            self.set_piece(moving_piece, m.to);
         }
-
-        self.unset_piece(m.from);
-        self.set_piece(moving_piece, m.to);
     }
 
     pub fn en_passant_square(&self) -> Option<Square> {
