@@ -167,25 +167,12 @@ impl Board {
         }
 
         // Remove captured piece if applicable
-        if let Some(taken_piece) = self.piece_at[m.to.row()][m.to.col()] {
-            // Bitboard
-            self.get_mut_bitboard(taken_piece)
-                .unset(Square::from_coords(m.from.row(), m.from.col()));
-
-            // Pieces
-            self.piece_at[m.to.row()][m.to.col()] = None;
+        if self.piece_at[m.to.row()][m.to.col()].is_some() {
+            self.unset_piece(m.to);
         }
 
-        // Move piece
-        // Bitboard
-        let bitboard = self.get_mut_bitboard(moving_piece);
-        bitboard.unset(Square::from_coords(m.from.row(), m.from.col()));
-        bitboard.set(Square::from_coords(m.to.row(), m.to.col()));
-
-        // Pieces
-        self.piece_at[m.from.row()][m.from.col()] = None;
-        debug_assert_eq!(self.piece_at[m.to.row()][m.to.col()], None);
-        self.piece_at[m.to.row()][m.to.col()] = Some(moving_piece);
+        self.unset_piece(m.from);
+        self.set_piece(moving_piece, m.to);
     }
 
     pub fn en_passant_square(&self) -> Option<Square> {
