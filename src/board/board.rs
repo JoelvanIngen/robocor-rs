@@ -155,12 +155,10 @@ impl Board {
     }
 
     pub fn apply_move(&mut self, m: Move) {
-        let moving_piece = match self.piece_at[m.from.row()][m.from.col()] {
-            Some(piece) => piece,
-            None => {
-                panic!("Moving piece could not be located on board on its square")
-            }
-        };
+        debug_assert!(
+            self.piece_at[m.from.row()][m.from.col()].is_some(),
+            "Moving piece could not be located on board on its square"
+        );
 
         if m.kind == KingCastle {
             let row = m.from.row();
@@ -180,7 +178,7 @@ impl Board {
                 self.unset_piece(m.to);
             }
 
-            self.unset_piece(m.from);
+            let moving_piece = self.unset_piece(m.from);
             self.set_piece(moving_piece, m.to);
         }
     }
