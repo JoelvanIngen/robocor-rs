@@ -65,7 +65,7 @@ impl PositionOptions {
         match subcommand {
             Some("startpos") => PositionOptions::StartPos,
             Some("fen") => {
-                let fen = opts.take(6).collect::<String>();
+                let fen = opts.take(6).collect::<Vec<_>>().join(" ");
                 PositionOptions::Fen(fen)
             }
             Some(s) => {
