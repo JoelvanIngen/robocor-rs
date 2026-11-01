@@ -1,28 +1,54 @@
-use crate::uci::Command;
+use crate::board::Board;
 use crate::uci::Command::{Go, Position};
 use crate::uci::GoOptions::Infinite;
 use crate::uci::PositionOptions::{Fen, StartPos};
+use crate::uci::{Command, GoOptions, PositionOptions};
 use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 
-pub fn executor(uci_tx: Sender<String>, uci_rx: Receiver<Command>) {
-    while let Ok(cmd) = uci_rx.recv() {
-        match cmd {
-            Go(opts) => match opts {
-                Infinite => uci_tx
-                    .send(String::from_str("Simulated engine start").unwrap())
-                    .expect("failed to send message from engine to uci"),
-            },
-            Position(opts) => match opts {
-                Fen(fen) => todo!("parse fen into board"),
-                StartPos => todo!("init board from start"),
-            },
-            cmd => {
-                panic!(
-                    "engine received command from uci that shouldn't be passed to engine: {:?}",
-                    cmd
-                )
+pub struct Engine {
+    uci_tx: Sender<String>,
+    uci_rx: Receiver<Command>,
+    board: Option<Board>,
+}
+
+impl Engine {
+    pub fn new(uci_tx: Sender<String>, uci_rx: Receiver<Command>) -> Engine {
+        Engine {
+            uci_tx,
+            uci_rx,
+            board: None,
+        }
+    }
+
+    pub fn start(&mut self) {
+        while let Ok(cmd) = self.uci_rx.recv() {
+            match cmd {
+                Go(opts) => self.handle_go(opts),
+                Position(opts) => self.handle_position(opts),
+                cmd => {
+                    panic!(
+                        "engine received command from uci that shouldn't be passed to engine: {:?}",
+                        cmd
+                    )
+                }
             }
+        }
+    }
+
+    fn handle_go(&mut self, opts: GoOptions) {
+        match opts {
+            Infinite => self
+                .uci_tx
+                .send(String::from_str("Simulated engine start").unwrap())
+                .expect("failed to send message from engine to uci"),
+        }
+    }
+
+    fn handle_position(&mut self, opts: PositionOptions) {
+        match opts {
+            Fen(fen) => todo!("parse fen into board"),
+            StartPos => todo!("init board from start"),
         }
     }
 }
