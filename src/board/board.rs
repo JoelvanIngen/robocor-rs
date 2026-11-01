@@ -167,7 +167,7 @@ impl Board {
         }
 
         // Remove captured piece if applicable
-        if self.piece_at[m.to.row()][m.to.col()].is_some() {
+        if m.is_capture() {
             self.unset_piece(m.to);
         }
 

@@ -33,4 +33,8 @@ impl Move {
     pub fn new(kind: MoveKind, from: Square, to: Square) -> Self {
         Self { kind, from, to }
     }
+
+    pub fn is_capture(&self) -> bool {
+        self.kind as u8 & 0b0100 != 0
+    }
 }
