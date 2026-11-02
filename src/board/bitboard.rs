@@ -145,7 +145,7 @@ mod tests {
         assert_eq!(bb, BitBoard::from_u64(66));
 
         bb.unset(Square::from_str("b1").unwrap());
-        assert_eq!(bb, BitBoard::from_u64(64), "Bitboard:\n{}", bb);
+        assert_eq!(bb, BitBoard::from_u64(64));
 
         bb.set(Square::from_str("a3").unwrap());
         assert_eq!(bb, BitBoard::from_u64(65600));
