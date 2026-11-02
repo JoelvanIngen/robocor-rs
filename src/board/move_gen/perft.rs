@@ -12,9 +12,14 @@ fn calc_positions(board: Board, remaining_depth: u8) -> usize {
         return 1;
     }
 
+    let moves = board.generate_moves();
+    if remaining_depth == 1 {
+        return moves.len();
+    }
+
     let mut move_number = 0usize;
 
-    for m in board.generate_moves() {
+    for m in moves {
         let mut m_board = board;
         m_board.apply_move(m);
 
