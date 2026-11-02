@@ -238,12 +238,12 @@ impl Board {
         if self.is_bb_attacked(
             self.turn.other(),
             self.get_bitboard(Piece::new(King, self.turn)),
-        ) && legal_moves.len() == 0
+        ) && legal_moves.is_empty()
         {
             // Checkmate
             return Won(self.turn.other());
         }
-        if legal_moves.len() == 0 {
+        if legal_moves.is_empty() {
             // Stalemate
             return Draw;
         }
