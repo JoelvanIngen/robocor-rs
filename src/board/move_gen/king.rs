@@ -1,7 +1,7 @@
 use crate::board::Square;
 use crate::board::bitboard::BitBoard;
-use crate::board::moves::Move;
 use crate::board::moves::MoveKind::{Capture, KingCastle, QueenCastle, QuietMove};
+use crate::board::moves::{Move, MoveList};
 
 const KING_DELTAS: [(i8, i8); 8] = [
     // (ROW, COL)
@@ -84,27 +84,29 @@ pub fn get_attacks_king(pos: Square, friendly: BitBoard) -> BitBoard {
 }
 
 pub fn get_pl_moves_king(
+    moves: &mut MoveList,
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
     castling_options: Vec<Square>,
-) -> Vec<Move> {
+) {
     let targets = get_attacks_king(pos, friendly);
     let captures = targets & enemy;
     let quiets = targets & !enemy;
 
-    let capture_moves = captures.iter().map(|to| Move::new(Capture, pos, to));
-    let quiet_moves = quiets.iter().map(|to| Move::new(QuietMove, pos, to));
+    for to in captures.iter() {
+        moves.push(Move::new(Capture, pos, to));
+    }
 
-    let mut moves = capture_moves.chain(quiet_moves).collect();
+    for to in quiets.iter() {
+        moves.push(Move::new(QuietMove, pos, to));
+    }
 
-    get_pl_castling_moves(&mut moves, pos, friendly, enemy, castling_options);
-
-    moves
+    get_pl_castling_moves(moves, pos, friendly, enemy, castling_options);
 }
 
 fn get_pl_castling_moves(
-    moves: &mut Vec<Move>,
+    moves: &mut MoveList,
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
@@ -145,7 +147,14 @@ mod tests {
             Move::new(QuietMove, orig_square, Square::from_coords(1, 0)),
             Move::new(QuietMove, orig_square, Square::from_coords(1, 1)),
         ];
-        let got = get_pl_moves_king(orig_square, BitBoard::EMPTY, BitBoard::EMPTY, vec![]);
+        let mut got = MoveList::new();
+        get_pl_moves_king(
+            &mut got,
+            orig_square,
+            BitBoard::EMPTY,
+            BitBoard::EMPTY,
+            vec![],
+        );
 
         assert_eq!(
             want.len(),
@@ -165,7 +174,8 @@ mod tests {
         friendly.set(Square::from_coords(1, 0));
         friendly.set(Square::from_coords(1, 1));
 
-        let moves = get_pl_moves_king(orig_square, friendly, BitBoard::EMPTY, vec![]);
+        let mut moves = MoveList::new();
+        get_pl_moves_king(&mut moves, orig_square, friendly, BitBoard::EMPTY, vec![]);
         assert_eq!(moves.len(), 0, "is moving through friendly pieces");
     }
 
@@ -183,7 +193,8 @@ mod tests {
             Move::new(Capture, orig_square, Square::from_coords(1, 0)),
             Move::new(Capture, orig_square, Square::from_coords(1, 1)),
         ];
-        let got = get_pl_moves_king(orig_square, friendly, enemy, vec![]);
+        let mut got = MoveList::new();
+        get_pl_moves_king(&mut got, orig_square, friendly, enemy, vec![]);
 
         assert_eq!(want.len(), got.len());
         for m in want {
@@ -202,7 +213,7 @@ mod tests {
             Move::new(QueenCastle, orig_square, Square::from_coords(0, 0)),
             Move::new(KingCastle, orig_square, Square::from_coords(0, 7)),
         ];
-        let mut got = vec![];
+        let mut got = MoveList::new();
         get_pl_castling_moves(
             &mut got,
             orig_square,
@@ -228,7 +239,7 @@ mod tests {
         friendly.set(Square::from_coords(0, 5));
 
         let want = vec![];
-        let mut got = vec![];
+        let mut got = MoveList::new();
         get_pl_castling_moves(
             &mut got,
             orig_square,

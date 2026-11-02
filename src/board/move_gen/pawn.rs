@@ -3,7 +3,7 @@ use crate::board::moves::MoveKind::{
     KnightPromotionCapture, QueenPromotion, QueenPromotionCapture, QuietMove, RookPromotion,
     RookPromotionCapture,
 };
-use crate::board::moves::{Move, MoveKind};
+use crate::board::moves::{Move, MoveKind, MoveList};
 use crate::board::piece::PieceColour;
 use crate::board::piece::PieceColour::{Black, White};
 use crate::board::{BitBoard, Square};
@@ -42,15 +42,13 @@ pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) ->
 }
 
 pub fn get_pl_moves_pawn(
+    moves: &mut MoveList,
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
     colour: PieceColour,
     ep_square: Option<Square>,
-) -> Vec<Move> {
-    // Pre-allocate space for single/double push and both captures
-    let mut moves = Vec::with_capacity(4);
-
+) {
     // Push if not blocked
     let push_row = match colour {
         White => pos.row() + 1,
@@ -115,19 +113,17 @@ pub fn get_pl_moves_pawn(
             }
         }
     }
-
-    moves
 }
 
 #[cfg(test)]
 mod test {
     use crate::board::move_gen::pawn::get_pl_moves_pawn;
-    use crate::board::moves::Move;
     use crate::board::moves::MoveKind::{
         BishopPromotion, BishopPromotionCapture, Capture, DoublePawnPush, KnightPromotion,
         KnightPromotionCapture, QueenPromotion, QueenPromotionCapture, QuietMove, RookPromotion,
         RookPromotionCapture,
     };
+    use crate::board::moves::{Move, MoveList};
     use crate::board::piece::PieceColour;
     use crate::board::piece::PieceColour::{Black, White};
     use crate::board::{BitBoard, Square};
@@ -154,7 +150,8 @@ mod test {
         }
         let ep = case.ep.map(|s| Square::from_str(s).unwrap());
 
-        let got = get_pl_moves_pawn(pos, friendly, enemy, case.colour, ep);
+        let mut got = MoveList::new();
+        get_pl_moves_pawn(&mut got, pos, friendly, enemy, case.colour, ep);
         let want = case.expected_moves;
 
         assert_eq!(

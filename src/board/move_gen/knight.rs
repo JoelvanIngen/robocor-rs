@@ -1,6 +1,6 @@
 use crate::board::bitboard::BitBoard;
-use crate::board::moves::Move;
 use crate::board::moves::MoveKind::{Capture, QuietMove};
+use crate::board::moves::{Move, MoveList};
 use crate::board::square::Square;
 
 const KNIGHT_DELTAS: [(i8, i8); 8] = [
@@ -53,10 +53,9 @@ pub fn get_attacks_knight(pos: Square, friendly: BitBoard) -> BitBoard {
     KNIGHT_MOVES[pos.idx()] & !friendly
 }
 
-pub fn get_pl_moves_knight(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
+pub fn get_pl_moves_knight(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
     // Find potential from_coords knight squares
     let new_positions_bb = KNIGHT_MOVES[pos.idx()];
-    let mut moves = Vec::with_capacity(KNIGHT_DELTAS.len());
 
     for new_pos in new_positions_bb.iter() {
         if friendly.is_set(new_pos) {
@@ -70,8 +69,6 @@ pub fn get_pl_moves_knight(pos: Square, friendly: BitBoard, enemy: BitBoard) -> 
 
         moves.push(Move::new(move_type, pos, new_pos));
     }
-
-    moves
 }
 
 #[cfg(test)]
@@ -85,7 +82,8 @@ mod tests {
             Move::new(QuietMove, orig_square, Square::from_coords(2, 1)),
             Move::new(QuietMove, orig_square, Square::from_coords(1, 2)),
         ];
-        let got = get_pl_moves_knight(orig_square, BitBoard::EMPTY, BitBoard::EMPTY);
+        let mut got = MoveList::new();
+        get_pl_moves_knight(&mut got, orig_square, BitBoard::EMPTY, BitBoard::EMPTY);
 
         assert_eq!(
             want.len(),
@@ -103,7 +101,13 @@ mod tests {
         friendly.set(Square::from_coords(1, 2));
         friendly.set(Square::from_coords(2, 1));
 
-        let moves = get_pl_moves_knight(Square::from_coords(0, 0), friendly, BitBoard::EMPTY);
+        let mut moves = MoveList::new();
+        get_pl_moves_knight(
+            &mut moves,
+            Square::from_coords(0, 0),
+            friendly,
+            BitBoard::EMPTY,
+        );
         assert_eq!(moves.len(), 0, "is moving through friendly pieces");
     }
 
@@ -118,7 +122,8 @@ mod tests {
         enemy.set(Square::from_coords(1, 2));
         enemy.set(Square::from_coords(2, 1));
 
-        let got = get_pl_moves_knight(orig_square, BitBoard::EMPTY, enemy);
+        let mut got = MoveList::new();
+        get_pl_moves_knight(&mut got, orig_square, BitBoard::EMPTY, enemy);
 
         assert_eq!(
             want.len(),

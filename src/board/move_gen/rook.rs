@@ -1,5 +1,5 @@
 use crate::board::move_gen::common::get_pl_moves_direction;
-use crate::board::moves::Move;
+use crate::board::moves::MoveList;
 use crate::board::{BitBoard, Square};
 
 const DIRECTIONS: [(i8, i8); 4] = [
@@ -15,24 +15,27 @@ pub fn get_attacks_rook(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Bit
     // but that's optimising for later
     DIRECTIONS
         .iter()
-        .flat_map(|dir| get_pl_moves_direction(pos, friendly, enemy, *dir))
+        .flat_map(|dir| {
+            let mut ml = MoveList::new();
+            get_pl_moves_direction(&mut ml, pos, friendly, enemy, *dir);
+            ml
+        })
         .fold(BitBoard::EMPTY, |mut bb, m| {
             bb.set(m.to);
             bb
         })
 }
 
-pub fn get_pl_moves_rook(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Vec<Move> {
-    let mut moves = vec![];
+pub fn get_pl_moves_rook(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
     for dir in DIRECTIONS {
-        moves.extend(get_pl_moves_direction(pos, friendly, enemy, dir));
+        get_pl_moves_direction(moves, pos, friendly, enemy, dir);
     }
-    moves
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::board::moves::Move;
     use crate::board::moves::MoveKind::{Capture, QuietMove};
     use std::str::FromStr;
 
@@ -54,7 +57,8 @@ mod tests {
             enemy.set(Square::from_str(sq).unwrap());
         }
 
-        let got = get_pl_moves_rook(pos, friendly, enemy);
+        let mut got = MoveList::new();
+        get_pl_moves_rook(&mut got, pos, friendly, enemy);
         let want = case.expected_moves;
 
         assert_eq!(

@@ -4,7 +4,7 @@ use crate::board::move_gen::{
     get_pl_moves_queen, get_pl_moves_rook,
 };
 use crate::board::moves::MoveKind::{KingCastle, QueenCastle};
-use crate::board::moves::{Move, MoveKind};
+use crate::board::moves::{Move, MoveKind, MoveList};
 use crate::board::piece::PieceColour::{Black, White};
 use crate::board::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::board::piece::{Piece, PieceColour};
@@ -13,8 +13,8 @@ use crate::board::{BitBoard, Board, get_pl_moves_knight};
 
 impl Board {
     /// Generate all pseudo-legal moves for a given colour
-    pub fn generate_pl_moves(&self, colour: PieceColour) -> Vec<Move> {
-        let mut moves = vec![];
+    pub fn generate_pl_moves(&self, colour: PieceColour) -> MoveList {
+        let mut moves = MoveList::new();
 
         let (friendly, enemy) = match colour {
             White => (
@@ -35,21 +35,34 @@ impl Board {
             if piece.colour != colour {
                 continue;
             }
-            moves.extend(match piece.kind {
-                Bishop => get_pl_moves_bishop(pos, friendly, enemy),
-                King => get_pl_moves_king(pos, friendly, enemy, self.get_castling_rights(colour)),
-                Knight => get_pl_moves_knight(pos, friendly, enemy),
-                Pawn => get_pl_moves_pawn(pos, friendly, enemy, colour, self.en_passant_square()),
-                Queen => get_pl_moves_queen(pos, friendly, enemy),
-                Rook => get_pl_moves_rook(pos, friendly, enemy),
-            })
+            match piece.kind {
+                Bishop => get_pl_moves_bishop(&mut moves, pos, friendly, enemy),
+                King => get_pl_moves_king(
+                    &mut moves,
+                    pos,
+                    friendly,
+                    enemy,
+                    self.get_castling_rights(colour),
+                ),
+                Knight => get_pl_moves_knight(&mut moves, pos, friendly, enemy),
+                Pawn => get_pl_moves_pawn(
+                    &mut moves,
+                    pos,
+                    friendly,
+                    enemy,
+                    colour,
+                    self.en_passant_square(),
+                ),
+                Queen => get_pl_moves_queen(&mut moves, pos, friendly, enemy),
+                Rook => get_pl_moves_rook(&mut moves, pos, friendly, enemy),
+            }
         }
 
         moves
     }
 
     /// Shortcut to generate legal moves for the current colour
-    pub fn generate_moves(&self) -> Vec<Move> {
+    pub fn generate_moves(&self) -> MoveList {
         self.generate_moves_colour(self.turn)
     }
 
@@ -58,8 +71,8 @@ impl Board {
     /// Whilst only the colour whose turn it is, is allowed to move,
     /// analysis might require finding potential moves in absence
     /// of a move (threat finding), so takes colour explicitly
-    pub fn generate_moves_colour(&self, colour: PieceColour) -> Vec<Move> {
-        let mut moves = vec![];
+    pub fn generate_moves_colour(&self, colour: PieceColour) -> MoveList {
+        let mut moves = MoveList::new();
 
         for pl_move in self.generate_pl_moves(colour) {
             let mut new_board = *self;

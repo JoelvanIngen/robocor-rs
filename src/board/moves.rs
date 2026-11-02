@@ -1,5 +1,11 @@
 use crate::board::square::Square;
+use arrayvec::ArrayVec;
 use std::fmt::Debug;
+
+// Most achievable moves should be 218, and even that will never realistically happen
+const MAX_MOVES: usize = 256;
+
+pub type MoveList = ArrayVec<Move, MAX_MOVES>;
 
 /// https://chessprogramming.org/Encoding_Moves
 /// Bits: promotion, capture, special 1, special 2
