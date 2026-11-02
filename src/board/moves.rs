@@ -37,4 +37,9 @@ impl Move {
     pub fn is_capture(&self) -> bool {
         self.kind as u8 & 0b0100 != 0
     }
+
+    pub fn is_irreversable(&self) -> bool {
+        // Only a quiet move is reversible
+        self.kind as u8 != 0b0000
+    }
 }

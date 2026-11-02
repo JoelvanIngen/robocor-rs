@@ -203,7 +203,11 @@ impl Board {
         }
 
         self.turn = self.turn.other();
-        todo!("halfmove clock");
+
+        self.halfmove_clock = match m.is_irreversable() {
+            true => 0,
+            false => self.halfmove_clock + 1,
+        };
         todo!("fullmove increment");
     }
 
