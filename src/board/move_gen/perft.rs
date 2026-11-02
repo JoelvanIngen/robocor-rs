@@ -1,5 +1,4 @@
 use crate::board::Board;
-use crate::board::board::GameState::Ongoing;
 
 pub fn perft(depth: u8) {
     let board = Board::start_position();
@@ -19,11 +18,7 @@ fn calc_positions(board: Board, remaining_depth: u8) -> usize {
         let mut m_board = board;
         m_board.apply_move(m);
 
-        if board.game_state() == Ongoing {
-            move_number += calc_positions(m_board, remaining_depth - 1);
-        } else {
-            move_number += 1;
-        }
+        move_number += calc_positions(m_board, remaining_depth - 1);
     }
 
     move_number
