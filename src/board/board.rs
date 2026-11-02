@@ -1,6 +1,6 @@
 use crate::board::bitboard::BitBoard;
 use crate::board::moves::Move;
-use crate::board::moves::MoveKind::{KingCastle, QueenCastle};
+use crate::board::moves::MoveKind::{DoublePawnPush, EnPassant, KingCastle, QueenCastle};
 use crate::board::piece::{Piece, PieceColour, PieceKind};
 use crate::board::square::Square;
 use crate::error::FenError;
@@ -176,6 +176,13 @@ impl Board {
             self.set_piece(rook, Square::from_coords(row, 3));
             self.castling_rights.unset(Square::from_coords(row, 0));
             self.castling_rights.unset(Square::from_coords(row, 7));
+        } else if m.kind == EnPassant {
+            // Special case for en passant since piece is taken from different
+            // square than destination square
+            let captured_row = m.from.row();
+            self.unset_piece(Square::from_coords(captured_row, m.to.col()));
+            let moving_piece = self.unset_piece(m.from);
+            self.set_piece(moving_piece, m.to);
         } else {
             // Remove captured piece if applicable
             if m.is_capture() {
@@ -186,8 +193,16 @@ impl Board {
             self.set_piece(moving_piece, m.to);
         }
 
+        self.en_passant = BitBoard::EMPTY;
+        if m.kind == DoublePawnPush {
+            // Get average of start and finish row, seems hacky but is
+            // a shorter (and branchless) implementation rather than switching on
+            // colour and performing +/- 1 arithmetic
+            let ep_row = (m.from.row() + m.to.row()) / 2;
+            self.en_passant.set(Square::from_coords(ep_row, m.to.col()));
+        }
+
         self.turn = self.turn.other();
-        todo!("en passant");
         todo!("halfmove clock");
         todo!("fullmove increment");
     }
