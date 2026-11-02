@@ -154,26 +154,6 @@ impl Board {
         self.piece_at[square.row()][square.col()]
     }
 
-    pub fn get_pieces(&self) -> Vec<Piece> {
-        let mut pieces = Vec::with_capacity(32);
-        for piece in self.piece_at.iter().flatten() {
-            if let Some(piece) = piece {
-                pieces.push(*piece);
-            }
-        }
-        pieces
-    }
-
-    pub fn get_pieces_by_colour(&self, colour: PieceColour) -> Vec<Piece> {
-        let mut pieces = Vec::with_capacity(32);
-        for piece in self.piece_at.iter().flatten() {
-            if let Some(piece) = piece {
-                pieces.push(*piece);
-            }
-        }
-        pieces
-    }
-
     pub fn apply_move(&mut self, m: Move) {
         debug_assert!(
             self.piece_at[m.from.row()][m.from.col()].is_some(),
@@ -324,6 +304,9 @@ mod tests {
     #[test]
     fn count_pieces_new_board() {
         let board = Board::start_position();
-        assert_eq!(board.get_pieces().len(), 32);
+        assert_eq!(
+            (board.colour_bitboards[0] | board.colour_bitboards[1]).count(),
+            32
+        );
     }
 }
