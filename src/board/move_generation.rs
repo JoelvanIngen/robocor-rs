@@ -48,9 +48,17 @@ impl Board {
         moves
     }
 
+    /// Shortcut to generate legal moves for the current colour
+    pub fn generate_moves(&self) -> Vec<Move> {
+        self.generate_moves_colour(self.turn)
+    }
+
     /// Generate all legal moves for a given colour
     /// Checks for legality
-    pub fn generate_moves(&self, colour: PieceColour) -> Vec<Move> {
+    /// Whilst only the colour whose turn it is, is allowed to move,
+    /// analysis might require finding potential moves in absence
+    /// of a move (threat finding), so takes colour explicitly
+    pub fn generate_moves_colour(&self, colour: PieceColour) -> Vec<Move> {
         let mut moves = vec![];
 
         for pl_move in self.generate_pl_moves(colour) {

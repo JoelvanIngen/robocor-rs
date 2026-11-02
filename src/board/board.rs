@@ -16,7 +16,7 @@ pub struct Board {
     // 2D array bitboard[colour][piece]
     bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
     piece_at: [[Option<Piece>; 8]; 8],
-    turn: PieceColour,
+    pub(super) turn: PieceColour,
     castling_rights: BitBoard,
     en_passant: BitBoard,
     halfmove_clock: u8, // Max value 50
