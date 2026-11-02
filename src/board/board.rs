@@ -181,6 +181,12 @@ impl Board {
             let moving_piece = self.unset_piece(m.from);
             self.set_piece(moving_piece, m.to);
         }
+
+        self.turn = self.turn.other();
+        todo!("castling rights");
+        todo!("en passant");
+        todo!("halfmove clock");
+        todo!("fullmove increment");
     }
 
     pub fn en_passant_square(&self) -> Option<Square> {
