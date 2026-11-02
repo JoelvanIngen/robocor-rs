@@ -64,7 +64,7 @@ impl Board {
         for pl_move in self.generate_pl_moves(colour) {
             let mut new_board = *self;
             new_board.apply_move(pl_move);
-            if new_board.is_in_check(colour, pl_move) {
+            if !new_board.is_in_check(colour, pl_move) {
                 moves.push(pl_move);
             }
         }
