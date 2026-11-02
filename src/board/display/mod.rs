@@ -2,5 +2,6 @@
 mod bitboard;
 mod board;
 mod piece;
+mod square;
 
 pub const BOARD_DIVIDER: &str = "  +---+---+---+---+---+---+---+---+";
