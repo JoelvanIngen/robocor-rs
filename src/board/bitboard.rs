@@ -32,7 +32,7 @@ impl BitBoard {
 
     /// Unsets a square, assumes square was occupied
     pub fn unset(&mut self, square: Square) {
-        debug_assert!(self.is_set(square)); // Cannot already be set
+        debug_assert!(self.is_set(square)); // Must already be set
         self.0 &= 1 << self.get_idx(square)
     }
 
