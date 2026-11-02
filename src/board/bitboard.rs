@@ -36,11 +36,6 @@ impl BitBoard {
         self.0 -= 1 << self.get_idx(square)
     }
 
-    /// Make empty without instantiating new board
-    pub fn empty(&mut self) {
-        self.0 &= 0;
-    }
-
     /// Retrieves square corresponding to the current value
     /// Can only be used if single bit is set
     pub fn get_square(&self) -> Square {
