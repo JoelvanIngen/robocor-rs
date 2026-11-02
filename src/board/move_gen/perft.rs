@@ -8,14 +8,13 @@ pub fn perft(depth: u8) {
 
 /// Recursively calculates the number of positions
 fn calc_positions(board: Board, remaining_depth: u8) -> usize {
-    let mut move_number = 0usize;
-
-    let moves = board.generate_moves();
     if remaining_depth == 0 {
-        return moves.len();
+        return 1;
     }
 
-    for m in moves {
+    let mut move_number = 0usize;
+
+    for m in board.generate_moves() {
         let mut m_board = board;
         m_board.apply_move(m);
         move_number += calc_positions(m_board, remaining_depth - 1);
