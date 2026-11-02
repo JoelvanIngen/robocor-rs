@@ -9,7 +9,7 @@ use crate::board::piece::PieceColour::{Black, White};
 use crate::board::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::board::piece::{Piece, PieceColour};
 use crate::board::square::BOARD_SQUARES;
-use crate::board::{BitBoard, Board, Square, get_pl_moves_knight};
+use crate::board::{BitBoard, Board, get_pl_moves_knight};
 
 impl Board {
     /// Generate all pseudo-legal moves for a given colour
@@ -74,93 +74,105 @@ impl Board {
 
     /// Checks if the king of a provided colour is in check by the opponent
     fn is_in_check(&self, colour: PieceColour, pl_move: Move) -> bool {
-        let attacked = self.create_attacked_bitboard(colour.other());
-
-        if pl_move.kind == KingCastle || pl_move.kind == QueenCastle {
+        let check_bb = if pl_move.kind == KingCastle || pl_move.kind == QueenCastle {
             // If the king wants to castle, it cannot move through or from a check
             // (the relevant rook can move through attacked squares)
-            self.check_castle_squares(colour, attacked, pl_move.kind)
+            self.get_castling_bb(colour, pl_move.kind)
         } else {
-            self.get_bitboard(Piece::new(King, colour)) & attacked != BitBoard::EMPTY
-        }
+            self.get_bitboard(Piece::new(King, colour))
+        };
+
+        self.is_bb_attacked(colour.other(), check_bb)
     }
 
     /// colour: colour of attacker (not the colour that made the move)
-    pub(crate) fn create_attacked_bitboard(&self, colour: PieceColour) -> BitBoard {
-        let mut bb = BitBoard::EMPTY;
-
+    /// target_bb: bitboard of squares to check
+    pub(super) fn is_bb_attacked(&self, colour: PieceColour, target_bb: BitBoard) -> bool {
         let friendly = self.get_colour_bitboard(colour);
         let enemy = self.get_colour_bitboard(colour.other());
 
         // King
-        bb |= self
-            .get_bitboard(Piece::new(King, colour))
-            .iter()
-            .map(|s| get_attacks_king(s, friendly))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(King, colour))
+                .iter()
+                .map(|s| get_attacks_king(s, friendly))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
         // Queen
-        bb |= self
-            .get_bitboard(Piece::new(Queen, colour))
-            .iter()
-            .map(|s| get_attacks_queen(s, friendly, enemy))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(Queen, colour))
+                .iter()
+                .map(|s| get_attacks_queen(s, friendly, enemy))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
         // Rooks
-        bb |= self
-            .get_bitboard(Piece::new(Rook, colour))
-            .iter()
-            .map(|s| get_attacks_rook(s, friendly, enemy))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(Rook, colour))
+                .iter()
+                .map(|s| get_attacks_rook(s, friendly, enemy))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
         // Bishops
-        bb |= self
-            .get_bitboard(Piece::new(Bishop, colour))
-            .iter()
-            .map(|s| get_attacks_bishop(s, friendly, enemy))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(Bishop, colour))
+                .iter()
+                .map(|s| get_attacks_bishop(s, friendly, enemy))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
         // Knights
-        bb |= self
-            .get_bitboard(Piece::new(Knight, colour))
-            .iter()
-            .map(|s| get_attacks_knight(s, friendly))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(Knight, colour))
+                .iter()
+                .map(|s| get_attacks_knight(s, friendly))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
         // Pawns
-        bb |= self
-            .get_bitboard(Piece::new(Pawn, colour))
-            .iter()
-            .map(|s| get_attacks_pawn(s, friendly, colour))
-            .collect();
+        if target_bb
+            & self
+                .get_bitboard(Piece::new(Pawn, colour))
+                .iter()
+                .map(|s| get_attacks_pawn(s, friendly, colour))
+                .collect()
+            != BitBoard::EMPTY
+        {
+            return true;
+        };
 
-        bb
+        false
     }
 
-    /// Check castling squares for checks, including the initial and final
-    /// positions of the king
-    fn check_castle_squares(
-        &self,
-        colour: PieceColour,
-        attacked: BitBoard,
-        castling_kind: MoveKind,
-    ) -> bool {
-        let row = match colour {
-            White => 0,
-            Black => 7,
-        };
-        let cols = match castling_kind {
-            KingCastle => [2, 3, 4],
-            QueenCastle => [4, 5, 6],
-            _ => {
-                panic!(
-                    "Checking attacked castling squares but received non-castling move: {:?}",
-                    castling_kind
-                )
-            }
-        };
-
-        cols.iter()
-            .all(|col| !attacked.is_set(Square::from_coords(row, *col)))
+    fn get_castling_bb(&self, colour: PieceColour, kind: MoveKind) -> BitBoard {
+        match (colour, kind) {
+            (White, QueenCastle) => BitBoard::from_u64(28),
+            (White, KingCastle) => BitBoard::from_u64(112),
+            (Black, QueenCastle) => BitBoard::from_u64(2017612633061982208),
+            (Black, KingCastle) => BitBoard::from_u64(8070450532247928832),
+            _ => unreachable!(),
+        }
     }
 }

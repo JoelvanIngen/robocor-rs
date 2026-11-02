@@ -235,10 +235,10 @@ impl Board {
             return Draw;
         }
         let legal_moves = self.generate_moves();
-        if self.bitboards[self.turn as usize][King as usize]
-            & self.create_attacked_bitboard(self.turn.other())
-            != BitBoard::EMPTY
-            && legal_moves.len() == 0
+        if self.is_bb_attacked(
+            self.turn.other(),
+            self.get_bitboard(Piece::new(King, self.turn)),
+        ) && legal_moves.len() == 0
         {
             // Checkmate
             return Won(self.turn.other());
