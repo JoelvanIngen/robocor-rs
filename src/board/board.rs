@@ -30,6 +30,8 @@ pub struct Board {
     en_passant: BitBoard,
     halfmove_clock: u8, // Max value 50
     fullmove_number: u16,
+
+    colour_bitboards: [BitBoard; 2],
 }
 
 impl Board {
@@ -111,6 +113,11 @@ impl Board {
         let fullmove_number_fen = fen_parts.next().ok_or(MissingField(fen.to_string()))?;
         let fullmove_number = fullmove_number_fen.parse().map_err(InvalidFullmoveNumber)?;
 
+        let colour_bitboards = [
+            combine_bitboards(bitboards[0]),
+            combine_bitboards(bitboards[1]),
+        ];
+
         Ok(Board {
             bitboards,
             piece_at,
@@ -119,6 +126,7 @@ impl Board {
             en_passant,
             halfmove_clock,
             fullmove_number,
+            colour_bitboards,
         })
     }
 
@@ -127,6 +135,7 @@ impl Board {
     fn set_piece(&mut self, piece: Piece, square: Square) {
         self.bitboards[piece.colour as usize][piece.kind as usize].set(square);
         self.piece_at[square.row()][square.col()] = Some(piece);
+        self.colour_bitboards[piece.colour as usize].set(square);
     }
 
     /// Removes a piece from both the BitBoard and the `piece_set` array,
@@ -137,6 +146,7 @@ impl Board {
             .expect("trying to unset a piece from an empty square");
         self.bitboards[piece.colour as usize][piece.kind as usize].unset(square);
         self.piece_at[square.row()][square.col()] = None;
+        self.colour_bitboards[piece.colour as usize].unset(square);
         piece
     }
 
@@ -259,7 +269,7 @@ impl Board {
     }
 
     pub fn get_colour_bitboard(&self, colour: PieceColour) -> BitBoard {
-        combine_bitboards(self.bitboards[colour as usize])
+        self.colour_bitboards[colour as usize]
     }
 
     pub fn get_bitboard(&self, piece: Piece) -> BitBoard {
