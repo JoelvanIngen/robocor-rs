@@ -5,3 +5,8 @@ edition = "2024"
 
 [dependencies]
 clap = "4.6.7"
+
+[profile.profiling]
+inherits = "release"
+debug = true
+strip = false
