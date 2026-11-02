@@ -30,11 +30,11 @@ impl Square {
     }
 
     pub const fn row(&self) -> usize {
-        (self.0 >> 3) as usize
+        (self.0 / 8) as usize
     }
 
     pub const fn col(&self) -> usize {
-        (self.0 & 0b00_000_111) as usize
+        (self.0 % 8) as usize
     }
 
     pub fn idx(&self) -> usize {
