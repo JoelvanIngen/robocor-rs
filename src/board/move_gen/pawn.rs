@@ -27,15 +27,16 @@ pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) ->
         White => 1,
         Black => -1,
     };
+    let new_row = (pos.row() as i8 + rd) as usize;
 
     let mut bb = BitBoard::EMPTY;
     if pos.col() == 0 {
-        bb.set(Square::from_coords(pos.row() + rd as usize, 1))
+        bb.set(Square::from_coords(new_row, 1))
     } else if pos.col() == 7 {
-        bb.set(Square::from_coords(pos.row() + rd as usize, 6))
+        bb.set(Square::from_coords(new_row, 6))
     } else {
-        bb.set(Square::from_coords(pos.row() + rd as usize, pos.col() + 1));
-        bb.set(Square::from_coords(pos.row() + rd as usize, pos.col() - 1));
+        bb.set(Square::from_coords(new_row, pos.col() + 1));
+        bb.set(Square::from_coords(new_row, pos.col() - 1));
     }
     bb & !friendly // Technically unnecessary, probably
 }
