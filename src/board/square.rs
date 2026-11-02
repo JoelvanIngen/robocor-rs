@@ -1,6 +1,5 @@
 use crate::error::NotationError;
 use crate::error::NotationError::{InvalidNotation, InvalidSquare};
-use std::fmt::Display;
 use std::str::FromStr;
 
 /// Pre-init all squares on the board for cheap iteration
@@ -70,12 +69,5 @@ impl FromStr for Square {
         }
 
         Ok(Square::from_coords(row, col))
-    }
-}
-
-impl Display for Square {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let col_letter = (b'a' + self.col() as u8) as char;
-        write!(f, "{}{}", col_letter, self.row() + 1)
     }
 }
