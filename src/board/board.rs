@@ -1,6 +1,7 @@
 use crate::board::bitboard::BitBoard;
 use crate::board::moves::Move;
 use crate::board::moves::MoveKind::{DoublePawnPush, EnPassant, KingCastle, QueenCastle};
+use crate::board::piece::PieceColour::Black;
 use crate::board::piece::{Piece, PieceColour, PieceKind};
 use crate::board::square::Square;
 use crate::error::FenError;
@@ -208,7 +209,10 @@ impl Board {
             true => 0,
             false => self.halfmove_clock + 1,
         };
-        todo!("fullmove increment");
+
+        if self.turn == Black {
+            self.fullmove_number += 1;
+        }
     }
 
     pub fn en_passant_square(&self) -> Option<Square> {
