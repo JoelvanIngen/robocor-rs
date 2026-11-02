@@ -1,3 +1,4 @@
 date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-02,1,b80eb28563d40b6434954bcf75260fedb9cc1617,release profile,1.46,37.16,
 2026-11-02,2,1950b5e9c8d62b9b4f4557386b739ccc378a1735,remove game state check in perft,0.06690,1.59,41.03
+2026-11-02,3,703c8cb8be3366517b843218ccd8f0c5391166d4,pre-compute combined colour bitboards,0.06703,1.56,39.32
