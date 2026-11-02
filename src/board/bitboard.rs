@@ -129,3 +129,25 @@ impl FromIterator<BitBoard> for BitBoard {
         bb
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::str::FromStr;
+
+    /// Two bits are set, we move one of them
+    #[test]
+    fn move_one() {
+        let mut bb = BitBoard::EMPTY;
+        bb.set(Square::from_str("b1").unwrap());
+        assert_eq!(bb, BitBoard::from_u64(2));
+        bb.set(Square::from_str("g1").unwrap());
+        assert_eq!(bb, BitBoard::from_u64(66));
+
+        bb.unset(Square::from_str("b1").unwrap());
+        assert_eq!(bb, BitBoard::from_u64(64), "Bitboard:\n{}", bb);
+
+        bb.set(Square::from_str("a3").unwrap());
+        assert_eq!(bb, BitBoard::from_u64(65600));
+    }
+}
