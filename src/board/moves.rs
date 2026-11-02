@@ -1,4 +1,5 @@
 use crate::board::square::Square;
+use std::fmt::Debug;
 
 /// https://chessprogramming.org/Encoding_Moves
 /// Bits: promotion, capture, special 1, special 2
@@ -22,7 +23,7 @@ pub enum MoveKind {
 }
 
 /// TODO: Optimise into single u16 (4 bits for MoveKind, 6 for `from`, 6 for `to`)
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move {
     pub kind: MoveKind,
     pub from: Square,
@@ -41,5 +42,11 @@ impl Move {
     pub fn is_irreversable(&self) -> bool {
         // Only a quiet move is reversible
         self.kind as u8 != 0b0000
+    }
+}
+
+impl Debug for Move {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}{} ({:?})", self.from, self.to, self.kind)
     }
 }
