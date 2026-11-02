@@ -1,3 +1,4 @@
+use crate::board::perft;
 use crate::cli::Behaviour;
 use crate::engine::Engine;
 use std::sync::mpsc::channel;
@@ -22,8 +23,4 @@ fn start() {
     let (engine_tx, engine_rx) = channel::<Command>();
     spawn(move || Engine::new(uci_tx, engine_rx).start());
     uci::executor(engine_tx, uci_rx);
-}
-
-fn perft(depth: u8) {
-    todo!("implement")
 }
