@@ -166,12 +166,16 @@ impl Board {
             let rook = self.unset_piece(Square::from_coords(row, 7));
             self.set_piece(king, Square::from_coords(row, 6));
             self.set_piece(rook, Square::from_coords(row, 5));
+            self.castling_rights.unset(Square::from_coords(row, 0));
+            self.castling_rights.unset(Square::from_coords(row, 7));
         } else if m.kind == QueenCastle {
             let row = m.from.row();
             let king = self.unset_piece(Square::from_coords(row, 4));
             let rook = self.unset_piece(Square::from_coords(row, 0));
             self.set_piece(king, Square::from_coords(row, 2));
             self.set_piece(rook, Square::from_coords(row, 3));
+            self.castling_rights.unset(Square::from_coords(row, 0));
+            self.castling_rights.unset(Square::from_coords(row, 7));
         } else {
             // Remove captured piece if applicable
             if m.is_capture() {
@@ -183,7 +187,6 @@ impl Board {
         }
 
         self.turn = self.turn.other();
-        todo!("castling rights");
         todo!("en passant");
         todo!("halfmove clock");
         todo!("fullmove increment");
