@@ -7,7 +7,7 @@ impl Display for BitBoard {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "{BOARD_DIVIDER}")?;
         for row_idx in (0..8).rev() {
-            write!(f, "{} |", row_idx)?;
+            write!(f, "{} |", row_idx + 1)?;
             for col_idx in 0..8 {
                 match self.is_set(Square::from_coords(row_idx, col_idx)) {
                     true => write!(f, " * |")?,
