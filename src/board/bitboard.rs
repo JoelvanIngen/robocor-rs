@@ -20,20 +20,31 @@ impl BitBoard {
     }
 
     pub const fn is_set(&self, square: Square) -> bool {
-        let idx = self.get_idx(square);
+        self.is_set_idx(self.get_idx(square))
+    }
+
+    pub const fn is_set_idx(&self, idx: usize) -> bool {
         self.0 >> idx & 1 == 1
     }
 
     /// Sets a square, assumes square was empty
     pub const fn set(&mut self, square: Square) {
-        debug_assert!(!self.is_set(square)); // Cannot already be set
-        self.0 |= 1 << self.get_idx(square)
+        self.set_idx(self.get_idx(square));
+    }
+
+    pub const fn set_idx(&mut self, idx: usize) {
+        debug_assert!(!self.is_set_idx(idx)); // Cannot already be set
+        self.0 |= 1 << idx
     }
 
     /// Unsets a square, assumes square was occupied
     pub fn unset(&mut self, square: Square) {
-        debug_assert!(self.is_set(square)); // Must already be set
-        self.0 -= 1 << self.get_idx(square)
+        self.unset_idx(self.get_idx(square))
+    }
+
+    pub fn unset_idx(&mut self, idx: usize) {
+        debug_assert!(self.is_set_idx(idx)); // Must already be set
+        self.0 -= 1 << idx
     }
 
     /// Retrieves square corresponding to the current value

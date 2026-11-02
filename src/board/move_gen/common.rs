@@ -2,37 +2,60 @@ use crate::board::moves::MoveKind::{Capture, QuietMove};
 use crate::board::moves::{Move, MoveList};
 use crate::board::{BitBoard, Square};
 
-/// Iterate in a given direction until stopped or reaching the end of the board
-/// Returns all pseudo legal moves in that direction
-pub fn get_pl_moves_direction(
-    moves: &mut MoveList,
-    orig_pos: Square,
-    friendly: BitBoard,
-    enemy: BitBoard,
-    dir: (i8, i8),
-) {
-    let mut pos = orig_pos;
-    loop {
-        let new_row = pos.row() as i8 + dir.0;
-        let new_col = pos.col() as i8 + dir.1;
-        pos = match is_within_board(new_row, new_col) {
-            true => Square::from_coords(new_row as usize, new_col as usize),
-            false => return,
-        };
+pub fn get_attacks_sliding(
+    pos: Square,
+    occupied: BitBoard,
+    directions: &[(i8, i8); 4],
+) -> BitBoard {
+    let mut attacks = BitBoard::EMPTY;
+    let start_row = pos.row() as i8;
+    let start_col = pos.col() as i8;
 
-        if friendly.is_set(pos) {
-            return;
+    for (dr, dc) in directions {
+        let mut r = start_row + dr;
+        let mut c = start_col + dc;
+
+        while (0..8).contains(&r) && (0..8).contains(&c) {
+            let sq_idx = (r * 8 + c) as usize;
+            attacks.set_idx(sq_idx);
+
+            if occupied.is_set_idx(sq_idx) {
+                break;
+            }
+            r += dr;
+            c += dc;
         }
-
-        if enemy.is_set(pos) {
-            moves.push(Move::new(Capture, orig_pos, pos));
-            return;
-        }
-
-        moves.push(Move::new(QuietMove, orig_pos, pos));
     }
+    attacks
 }
 
-fn is_within_board(row: i8, col: i8) -> bool {
-    (0..8).contains(&row) && (0..8).contains(&col)
+pub fn get_pl_moves_sliding(
+    moves: &mut MoveList,
+    pos: Square,
+    friendly: BitBoard,
+    enemy: BitBoard,
+    directions: &[(i8, i8); 4],
+) {
+    let start_row = pos.row() as i8;
+    let start_col = pos.col() as i8;
+
+    for (dr, dc) in directions {
+        let mut r = start_row + dr;
+        let mut c = start_col + dc;
+
+        while (0..8).contains(&r) && (0..8).contains(&c) {
+            let sq_idx = (r * 8 + c) as usize;
+            if friendly.is_set_idx(sq_idx) {
+                break;
+            }
+            if enemy.is_set_idx(sq_idx) {
+                moves.push(Move::new(Capture, pos, Square::from_index(sq_idx)));
+                break;
+            }
+
+            moves.push(Move::new(QuietMove, pos, Square::from_index(sq_idx)));
+            r += dr;
+            c += dc;
+        }
+    }
 }

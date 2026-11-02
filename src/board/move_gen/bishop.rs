@@ -1,4 +1,4 @@
-use crate::board::move_gen::common::get_pl_moves_direction;
+use crate::board::move_gen::common::{get_attacks_sliding, get_pl_moves_sliding};
 use crate::board::moves::MoveList;
 use crate::board::{BitBoard, Square};
 
@@ -11,25 +11,11 @@ const DIRECTIONS: [(i8, i8); 4] = [
 ];
 
 pub fn get_attacks_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
-    // Wrong way around (ideally we compute bitboard cheap instead of computing entire moves)
-    // but that's optimising for later
-    DIRECTIONS
-        .iter()
-        .flat_map(|dir| {
-            let mut ml = MoveList::new();
-            get_pl_moves_direction(&mut ml, pos, friendly, enemy, *dir);
-            ml
-        })
-        .fold(BitBoard::EMPTY, |mut bb, m| {
-            bb.set(m.to);
-            bb
-        })
+    get_attacks_sliding(pos, friendly | enemy, &DIRECTIONS)
 }
 
 pub fn get_pl_moves_bishop(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
-    for dir in DIRECTIONS {
-        get_pl_moves_direction(moves, pos, friendly, enemy, dir);
-    }
+    get_pl_moves_sliding(moves, pos, friendly, enemy, &DIRECTIONS)
 }
 
 #[cfg(test)]
