@@ -7,7 +7,7 @@ use crate::board::moves::MoveKind::{KingCastle, QueenCastle};
 use crate::board::moves::{Move, MoveKind};
 use crate::board::piece::PieceColour::{Black, White};
 use crate::board::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
-use crate::board::piece::{Piece, PieceColour, PieceKind};
+use crate::board::piece::{Piece, PieceColour};
 use crate::board::square::BOARD_SQUARES;
 use crate::board::{BitBoard, Board, Square, get_pl_moves_knight};
 
@@ -28,20 +28,20 @@ impl Board {
         };
 
         for pos in BOARD_SQUARES {
-            moves.extend(match self.get_piece(pos) {
-                Some(piece) => match piece.kind {
-                    PieceKind::Bishop => get_pl_moves_bishop(pos, friendly, enemy),
-                    PieceKind::King => {
-                        get_pl_moves_king(pos, friendly, enemy, self.get_castling_rights(colour))
-                    }
-                    PieceKind::Knight => get_pl_moves_knight(pos, friendly, enemy),
-                    PieceKind::Pawn => {
-                        get_pl_moves_pawn(pos, friendly, enemy, colour, self.en_passant_square())
-                    }
-                    PieceKind::Queen => get_pl_moves_queen(pos, friendly, enemy),
-                    PieceKind::Rook => get_pl_moves_rook(pos, friendly, enemy),
-                },
+            let piece = match self.get_piece(pos) {
+                Some(p) => p,
                 None => continue,
+            };
+            if piece.colour != colour {
+                continue;
+            }
+            moves.extend(match piece.kind {
+                Bishop => get_pl_moves_bishop(pos, friendly, enemy),
+                King => get_pl_moves_king(pos, friendly, enemy, self.get_castling_rights(colour)),
+                Knight => get_pl_moves_knight(pos, friendly, enemy),
+                Pawn => get_pl_moves_pawn(pos, friendly, enemy, colour, self.en_passant_square()),
+                Queen => get_pl_moves_queen(pos, friendly, enemy),
+                Rook => get_pl_moves_rook(pos, friendly, enemy),
             })
         }
 
