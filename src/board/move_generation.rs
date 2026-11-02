@@ -86,7 +86,7 @@ impl Board {
     }
 
     /// colour: colour of attacker (not the colour that made the move)
-    fn create_attacked_bitboard(&self, colour: PieceColour) -> BitBoard {
+    pub(crate) fn create_attacked_bitboard(&self, colour: PieceColour) -> BitBoard {
         let mut bb = BitBoard::EMPTY;
 
         let friendly = self.get_colour_bitboard(colour);

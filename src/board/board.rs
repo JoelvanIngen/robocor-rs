@@ -1,7 +1,9 @@
 use crate::board::bitboard::BitBoard;
+use crate::board::board::GameState::{Draw, Ongoing, Won};
 use crate::board::moves::Move;
 use crate::board::moves::MoveKind::{DoublePawnPush, EnPassant, KingCastle, QueenCastle};
 use crate::board::piece::PieceColour::Black;
+use crate::board::piece::PieceKind::King;
 use crate::board::piece::{Piece, PieceColour, PieceKind};
 use crate::board::square::Square;
 use crate::error::FenError;
@@ -10,6 +12,13 @@ use crate::error::FenError::{
     InvalidTurn, MissingField,
 };
 use std::str::FromStr;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum GameState {
+    Ongoing,
+    Won(PieceColour),
+    Draw,
+}
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Board {
@@ -213,6 +222,33 @@ impl Board {
         if self.turn == Black {
             self.fullmove_number += 1;
         }
+    }
+
+    pub fn game_state(&self) -> GameState {
+        if self.halfmove_clock > 50 {
+            return Draw;
+        }
+        if (combine_bitboards(self.bitboards[0]) & combine_bitboards(self.bitboards[1])).count()
+            == 2
+        {
+            // Only kings remain
+            return Draw;
+        }
+        let legal_moves = self.generate_moves();
+        if self.bitboards[self.turn as usize][King as usize]
+            & self.create_attacked_bitboard(self.turn.other())
+            != BitBoard::EMPTY
+            && legal_moves.len() == 0
+        {
+            // Checkmate
+            return Won(self.turn.other());
+        }
+        if legal_moves.len() == 0 {
+            // Stalemate
+            return Draw;
+        }
+
+        Ongoing
     }
 
     pub fn en_passant_square(&self) -> Option<Square> {
