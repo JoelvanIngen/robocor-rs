@@ -86,7 +86,10 @@ pub fn get_pl_moves_pawn(
 
     for capture_col_delta in [-1i8, 1i8] {
         let new_col = pos.col() as i8 + capture_col_delta;
-        debug_assert!((0..=7).contains(&new_col));
+        if !(0..=7).contains(&new_col) {
+            // Pawn on edge of board
+            continue;
+        }
 
         let capture_pos = Square::from_coords(push_row, new_col as usize);
 
