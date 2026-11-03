@@ -1,5 +1,6 @@
 use crate::board::bitboard::BitBoard;
 use crate::board::board::GameState::{Draw, Ongoing, Won};
+use crate::board::move_gen::CASTLING_MASK;
 use crate::board::moves::Move;
 use crate::board::moves::MoveKind::{
     BishopPromotion, BishopPromotionCapture, DoublePawnPush, EnPassant, KingCastle,
@@ -170,16 +171,12 @@ impl Board {
             let rook = self.unset_piece(Square::from_coords(row, 7));
             self.set_piece(king, Square::from_coords(row, 6));
             self.set_piece(rook, Square::from_coords(row, 5));
-            self.castling_rights.unset(Square::from_coords(row, 0));
-            self.castling_rights.unset(Square::from_coords(row, 7));
         } else if m.kind == QueenCastle {
             let row = m.from.row();
             let king = self.unset_piece(Square::from_coords(row, 4));
             let rook = self.unset_piece(Square::from_coords(row, 0));
             self.set_piece(king, Square::from_coords(row, 2));
             self.set_piece(rook, Square::from_coords(row, 3));
-            self.castling_rights.unset(Square::from_coords(row, 0));
-            self.castling_rights.unset(Square::from_coords(row, 7));
         } else if m.kind == EnPassant {
             // Special case for en passant since piece is taken from different
             // square than destination square
@@ -212,6 +209,10 @@ impl Board {
             let moving_piece = self.unset_piece(m.from);
             self.set_piece(moving_piece, m.to);
         }
+
+        // Update castling rights
+        self.castling_rights &= CASTLING_MASK[m.from.idx()];
+        self.castling_rights &= CASTLING_MASK[m.to.idx()];
 
         self.en_passant = BitBoard::EMPTY;
         if m.kind == DoublePawnPush {
