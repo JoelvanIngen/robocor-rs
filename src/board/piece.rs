@@ -46,6 +46,7 @@ impl PieceColour {
 }
 
 impl PieceColour {
+    #[inline(always)]
     pub fn other(self) -> PieceColour {
         match self {
             White => Black,
@@ -72,6 +73,7 @@ pub struct Piece {
 }
 
 impl Piece {
+    #[inline(always)]
     pub fn new(kind: PieceKind, colour: PieceColour) -> Self {
         Self { kind, colour }
     }

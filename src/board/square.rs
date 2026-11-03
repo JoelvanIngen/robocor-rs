@@ -19,24 +19,29 @@ pub const BOARD_SQUARES: [Square; 64] = {
 pub struct Square(u8);
 
 impl Square {
+    #[inline(always)]
     pub const fn from_coords(row: usize, col: usize) -> Square {
         debug_assert!(row < 8 && col < 8, "Square out of bounds");
         Square::from_index(row * 8 + col)
     }
 
+    #[inline(always)]
     pub const fn from_index(index: usize) -> Square {
         debug_assert!(index < 64, "Square out of bounds");
         Square(index as u8)
     }
 
+    #[inline(always)]
     pub const fn row(&self) -> usize {
         (self.0 / 8) as usize
     }
 
+    #[inline(always)]
     pub const fn col(&self) -> usize {
         (self.0 % 8) as usize
     }
 
+    #[inline(always)]
     pub fn idx(&self) -> usize {
         self.0 as usize
     }

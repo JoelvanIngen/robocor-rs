@@ -57,33 +57,40 @@ pub struct Move {
 }
 
 impl Move {
+    #[inline(always)]
     pub fn new(kind: MoveKind, from: Square, to: Square) -> Self {
         Self {
             repr: ((kind as u16) << 12) + ((from.idx() as u16) << 6) + to.idx() as u16,
         }
     }
 
+    #[inline(always)]
     pub fn kind(&self) -> MoveKind {
         MoveKind::from((self.repr >> 12) as u8)
     }
 
+    #[inline(always)]
     pub fn from(&self) -> Square {
         Square::from_index(((self.repr >> 6) & 0b111_111) as usize)
     }
 
+    #[inline(always)]
     pub fn to(&self) -> Square {
         Square::from_index((self.repr & 0b111_111) as usize)
     }
 
+    #[inline(always)]
     pub fn is_capture(&self) -> bool {
         self.repr >> 12 & 0b0100 != 0
     }
 
+    #[inline(always)]
     pub fn is_irreversable(&self) -> bool {
         // Only a quiet move is reversible
         self.repr >> 12 != 0b0000
     }
 
+    #[inline(always)]
     pub fn is_promotion(&self) -> bool {
         self.repr >> 12 & 0b1000 != 0
     }
