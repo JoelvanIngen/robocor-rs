@@ -6,3 +6,4 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-02,3,9aad838a7d5c96cee6694cbb3e92dfcaebf5868b,optimise move and attack generation,,0.42618,10.52
 2026-11-02,3,dfc4b3f05bc6d0c2d8e900b095a93c7c0b7a6e30,castling rights bugfix,,0.47288,11.86
 2026-11-02,3,9ede26c0bd9a8963af3ce45b7a8dfdd43e7841c1,apply_move refactor,,0.47147,11.43
+2026-11-02,3,24c5a0a480243e3aeeb9dce2fd20f9bf60182284,move compression,,0.48627,11.83
