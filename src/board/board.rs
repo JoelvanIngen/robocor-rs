@@ -1,9 +1,13 @@
 use crate::board::bitboard::BitBoard;
 use crate::board::board::GameState::{Draw, Ongoing, Won};
 use crate::board::moves::Move;
-use crate::board::moves::MoveKind::{DoublePawnPush, EnPassant, KingCastle, QueenCastle};
+use crate::board::moves::MoveKind::{
+    BishopPromotion, BishopPromotionCapture, DoublePawnPush, EnPassant, KingCastle,
+    KnightPromotion, KnightPromotionCapture, QueenCastle, QueenPromotion, QueenPromotionCapture,
+    RookPromotion, RookPromotionCapture,
+};
 use crate::board::piece::PieceColour::Black;
-use crate::board::piece::PieceKind::King;
+use crate::board::piece::PieceKind::{Bishop, King, Knight, Queen, Rook};
 use crate::board::piece::{Piece, PieceColour, PieceKind};
 use crate::board::square::Square;
 use crate::error::FenError;
@@ -183,6 +187,22 @@ impl Board {
             self.unset_piece(Square::from_coords(captured_row, m.to.col()));
             let moving_piece = self.unset_piece(m.from);
             self.set_piece(moving_piece, m.to);
+        } else if m.is_promotion() {
+            let new_piece_kind = match m.kind {
+                QueenPromotionCapture | QueenPromotion => Queen,
+                RookPromotionCapture | RookPromotion => Rook,
+                BishopPromotionCapture | BishopPromotion => Bishop,
+                KnightPromotionCapture | KnightPromotion => Knight,
+                _ => unreachable!(),
+            };
+
+            if m.is_capture() {
+                // Unset capture target piece
+                self.unset_piece(m.to);
+            }
+
+            self.unset_piece(m.from);
+            self.set_piece(Piece::new(new_piece_kind, self.turn), m.to);
         } else {
             // Remove captured piece if applicable
             if m.is_capture() {

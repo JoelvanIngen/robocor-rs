@@ -49,6 +49,10 @@ impl Move {
         // Only a quiet move is reversible
         self.kind as u8 != 0b0000
     }
+
+    pub fn is_promotion(&self) -> bool {
+        self.kind as u8 & 0b1000 != 0
+    }
 }
 
 impl Debug for Move {
