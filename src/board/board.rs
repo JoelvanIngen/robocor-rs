@@ -160,21 +160,25 @@ impl Board {
     }
 
     pub fn apply_move(&mut self, m: Move) {
-        debug_assert!(self.get_piece(m.from).is_some(), "Moving piece not found");
+        debug_assert!(self.get_piece(m.from()).is_some(), "Moving piece not found");
+
+        let kind = m.kind();
+        let from = m.from();
+        let to = m.to();
 
         // Captures
-        if m.kind == EnPassant {
+        if kind == EnPassant {
             // En-passant-ed piece must be on the starting row of the capturing piece
-            let captured_row = m.from.row();
-            self.unset_piece(Square::from_coords(captured_row, m.from.col()));
+            let captured_row = from.row();
+            self.unset_piece(Square::from_coords(captured_row, to.col()));
         } else if m.is_capture() {
-            self.unset_piece(m.to);
+            self.unset_piece(to);
         }
 
         // Move piece and handle promotion
-        let moving_piece = self.unset_piece(m.from);
+        let moving_piece = self.unset_piece(from);
         let final_piece = if m.is_promotion() {
-            let kind = match m.kind {
+            let kind = match kind {
                 QueenPromotionCapture | QueenPromotion => Queen,
                 RookPromotionCapture | RookPromotion => Rook,
                 BishopPromotionCapture | BishopPromotion => Bishop,
@@ -185,31 +189,31 @@ impl Board {
         } else {
             moving_piece
         };
-        self.set_piece(final_piece, m.to);
+        self.set_piece(final_piece, to);
 
         // Castling rook movement
         // King has already moved
-        if m.kind == QueenCastle {
-            let row = m.from.row();
+        if kind == QueenCastle {
+            let row = from.row();
             let rook = self.unset_piece(Square::from_coords(row, 0));
             self.set_piece(rook, Square::from_coords(row, 3));
-        } else if m.kind == KingCastle {
-            let row = m.from.row();
+        } else if kind == KingCastle {
+            let row = from.row();
             let rook = self.unset_piece(Square::from_coords(row, 7));
             self.set_piece(rook, Square::from_coords(row, 5));
         }
 
         // Update castling rights
-        self.castling_rights &= CASTLING_MASK[m.from.idx()];
-        self.castling_rights &= CASTLING_MASK[m.to.idx()];
+        self.castling_rights &= CASTLING_MASK[from.idx()];
+        self.castling_rights &= CASTLING_MASK[to.idx()];
 
         self.en_passant = BitBoard::EMPTY;
-        if m.kind == DoublePawnPush {
+        if kind == DoublePawnPush {
             // Get average of start and finish row, seems hacky but is
             // a shorter (and branchless) implementation rather than switching on
             // colour and performing +/- 1 arithmetic
-            let ep_row = (m.from.row() + m.to.row()) / 2;
-            self.en_passant.set(Square::from_coords(ep_row, m.to.col()));
+            let ep_row = (from.row() + to.row()) / 2;
+            self.en_passant.set(Square::from_coords(ep_row, to.col()));
         }
 
         // Update clocks

@@ -87,10 +87,11 @@ impl Board {
 
     /// Checks if the king of a provided colour is in check by the opponent
     fn is_in_check(&self, colour: PieceColour, pl_move: Move) -> bool {
-        let check_bb = if pl_move.kind == KingCastle || pl_move.kind == QueenCastle {
+        let pl_move_kind = pl_move.kind();
+        let check_bb = if pl_move_kind == KingCastle || pl_move_kind == QueenCastle {
             // If the king wants to castle, it cannot move through or from a check
             // (the relevant rook can move through attacked squares)
-            self.get_castling_bb(colour, pl_move.kind)
+            self.get_castling_bb(colour, pl_move_kind)
         } else {
             self.get_bitboard(Piece::new(King, colour))
         };

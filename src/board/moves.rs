@@ -28,35 +28,69 @@ pub enum MoveKind {
     QueenPromotionCapture = 0b1111,
 }
 
+impl MoveKind {
+    pub fn from(v: u8) -> MoveKind {
+        match v {
+            0b0000 => MoveKind::QuietMove,
+            0b0001 => MoveKind::DoublePawnPush,
+            0b0010 => MoveKind::KingCastle,
+            0b0011 => MoveKind::QueenCastle,
+            0b0100 => MoveKind::Capture,
+            0b0101 => MoveKind::EnPassant,
+            0b1000 => MoveKind::KnightPromotion,
+            0b1001 => MoveKind::BishopPromotion,
+            0b1010 => MoveKind::RookPromotion,
+            0b1011 => MoveKind::QueenPromotion,
+            0b1100 => MoveKind::KnightPromotionCapture,
+            0b1101 => MoveKind::BishopPromotionCapture,
+            0b1110 => MoveKind::RookPromotionCapture,
+            0b1111 => MoveKind::QueenPromotionCapture,
+            _ => unreachable!(),
+        }
+    }
+}
+
 /// TODO: Optimise into single u16 (4 bits for MoveKind, 6 for `from`, 6 for `to`)
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move {
-    pub kind: MoveKind,
-    pub from: Square,
-    pub to: Square,
+    repr: u16,
 }
 
 impl Move {
     pub fn new(kind: MoveKind, from: Square, to: Square) -> Self {
-        Self { kind, from, to }
+        Self {
+            repr: ((kind as u16) << 12) + ((from.idx() as u16) << 6) + to.idx() as u16,
+        }
+    }
+
+    pub fn kind(&self) -> MoveKind {
+        MoveKind::from((self.repr >> 12) as u8)
+    }
+
+    pub fn from(&self) -> Square {
+        Square::from_index(((self.repr >> 6) & 0b111_111) as usize)
+    }
+
+    pub fn to(&self) -> Square {
+        Square::from_index((self.repr & 0b111_111) as usize)
     }
 
     pub fn is_capture(&self) -> bool {
-        self.kind as u8 & 0b0100 != 0
+        self.repr >> 12 & 0b0100 != 0
     }
 
     pub fn is_irreversable(&self) -> bool {
         // Only a quiet move is reversible
-        self.kind as u8 != 0b0000
+        self.repr >> 12 != 0b0000
     }
 
     pub fn is_promotion(&self) -> bool {
-        self.kind as u8 & 0b1000 != 0
+        self.repr >> 12 & 0b1000 != 0
     }
 }
 
 impl Debug for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}{} ({:?})", self.from, self.to, self.kind)
+        write!(f, "{}{} ({:?})", self.from(), self.to(), self.kind())
     }
 }
