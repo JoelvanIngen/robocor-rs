@@ -160,54 +160,43 @@ impl Board {
     }
 
     pub fn apply_move(&mut self, m: Move) {
-        debug_assert!(
-            self.piece_at[m.from.row()][m.from.col()].is_some(),
-            "Moving piece could not be located on board on its square"
-        );
+        debug_assert!(self.get_piece(m.from).is_some(), "Moving piece not found");
 
-        if m.kind == KingCastle {
-            let row = m.from.row();
-            let king = self.unset_piece(Square::from_coords(row, 4));
-            let rook = self.unset_piece(Square::from_coords(row, 7));
-            self.set_piece(king, Square::from_coords(row, 6));
-            self.set_piece(rook, Square::from_coords(row, 5));
-        } else if m.kind == QueenCastle {
-            let row = m.from.row();
-            let king = self.unset_piece(Square::from_coords(row, 4));
-            let rook = self.unset_piece(Square::from_coords(row, 0));
-            self.set_piece(king, Square::from_coords(row, 2));
-            self.set_piece(rook, Square::from_coords(row, 3));
-        } else if m.kind == EnPassant {
-            // Special case for en passant since piece is taken from different
-            // square than destination square
+        // Captures
+        if m.kind == EnPassant {
+            // En-passant-ed piece must be on the starting row of the capturing piece
             let captured_row = m.from.row();
-            self.unset_piece(Square::from_coords(captured_row, m.to.col()));
-            let moving_piece = self.unset_piece(m.from);
-            self.set_piece(moving_piece, m.to);
-        } else if m.is_promotion() {
-            let new_piece_kind = match m.kind {
+            self.unset_piece(Square::from_coords(captured_row, m.from.col()));
+        } else if m.is_capture() {
+            self.unset_piece(m.to);
+        }
+
+        // Move piece and handle promotion
+        let moving_piece = self.unset_piece(m.from);
+        let final_piece = if m.is_promotion() {
+            let kind = match m.kind {
                 QueenPromotionCapture | QueenPromotion => Queen,
                 RookPromotionCapture | RookPromotion => Rook,
                 BishopPromotionCapture | BishopPromotion => Bishop,
                 KnightPromotionCapture | KnightPromotion => Knight,
                 _ => unreachable!(),
             };
-
-            if m.is_capture() {
-                // Unset capture target piece
-                self.unset_piece(m.to);
-            }
-
-            self.unset_piece(m.from);
-            self.set_piece(Piece::new(new_piece_kind, self.turn), m.to);
+            Piece::new(kind, self.turn)
         } else {
-            // Remove captured piece if applicable
-            if m.is_capture() {
-                self.unset_piece(m.to);
-            }
+            moving_piece
+        };
+        self.set_piece(final_piece, m.to);
 
-            let moving_piece = self.unset_piece(m.from);
-            self.set_piece(moving_piece, m.to);
+        // Castling rook movement
+        // King has already moved
+        if m.kind == QueenCastle {
+            let row = m.from.row();
+            let rook = self.unset_piece(Square::from_coords(row, 0));
+            self.set_piece(rook, Square::from_coords(row, 3));
+        } else if m.kind == KingCastle {
+            let row = m.from.row();
+            let rook = self.unset_piece(Square::from_coords(row, 7));
+            self.set_piece(rook, Square::from_coords(row, 5));
         }
 
         // Update castling rights
@@ -223,16 +212,17 @@ impl Board {
             self.en_passant.set(Square::from_coords(ep_row, m.to.col()));
         }
 
-        self.turn = self.turn.other();
-
+        // Update clocks
         self.halfmove_clock = match m.is_irreversable() {
             true => 0,
             false => self.halfmove_clock + 1,
         };
-
         if self.turn == Black {
             self.fullmove_number += 1;
         }
+
+        // Update turn
+        self.turn = self.turn.other();
     }
 
     pub fn game_state(&self) -> GameState {
