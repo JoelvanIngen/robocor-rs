@@ -50,7 +50,7 @@ impl MoveKind {
     }
 }
 
-/// TODO: Optimise into single u16 (4 bits for MoveKind, 6 for `from`, 6 for `to`)
+/// 4 bits for MoveKind, 6 for `from`, 6 for `to`
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Move {
     repr: u16,
