@@ -22,23 +22,42 @@ const CAPTURE_PROMOTION_VARIANTS: [MoveKind; 4] = [
     QueenPromotionCapture,
 ];
 
-pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) -> BitBoard {
-    let rd = match colour {
-        White => 1,
-        Black => -1,
-    };
-    let new_row = (pos.row() as i8 + rd) as usize;
+/// Pawn attacks [attacker colour] [starting square idx]
+const PAWN_ATTACKS: [[BitBoard; 64]; 2] = [pawn_attacks(White), pawn_attacks(Black)];
 
-    let mut bb = BitBoard::EMPTY;
-    if pos.col() == 0 {
-        bb.set(Square::from_coords(new_row, 1))
-    } else if pos.col() == 7 {
-        bb.set(Square::from_coords(new_row, 6))
-    } else {
-        bb.set(Square::from_coords(new_row, pos.col() + 1));
-        bb.set(Square::from_coords(new_row, pos.col() - 1));
+/// Pre-compute pawn attack bitboards for each accessible square on the board
+const fn pawn_attacks(colour: PieceColour) -> [BitBoard; 64] {
+    let mut attacks = [BitBoard::EMPTY; 64];
+
+    let (ld, rd) = match colour {
+        White => (7, 9),
+        Black => (-9, -7),
+    };
+
+    // Pawns cannot exist on first or last row
+    let mut idx = 8;
+    while idx < 56 {
+        let col = idx as i8 % 8;
+        if col == 0 {
+            // Attack right
+            attacks[idx].set_idx((idx as i8 + rd) as usize);
+        } else if col == 7 {
+            // Attack left
+            attacks[idx].set_idx((idx as i8 + ld) as usize);
+        } else {
+            // Attack both
+            attacks[idx].set_idx((idx as i8 + ld) as usize);
+            attacks[idx].set_idx((idx as i8 + rd) as usize);
+        }
+
+        idx += 1;
     }
-    bb & !friendly // Technically unnecessary, probably
+
+    attacks
+}
+
+pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) -> BitBoard {
+    PAWN_ATTACKS[colour as usize][pos.idx()]
 }
 
 pub fn get_pl_moves_pawn(
@@ -83,33 +102,23 @@ pub fn get_pl_moves_pawn(
         }
     }
 
-    for capture_col_delta in [-1i8, 1i8] {
-        let new_col = pos.col() as i8 + capture_col_delta;
-        if !(0..=7).contains(&new_col) {
-            // Pawn on edge of board
-            continue;
+    // Attacks
+    let ep_bb = match ep_square {
+        None => BitBoard::EMPTY,
+        Some(s) => {
+            let mut bb = BitBoard::EMPTY;
+            bb.set(s);
+            bb
         }
-
-        let capture_pos = Square::from_coords(push_row, new_col as usize);
-
-        // En passant
-        if let Some(ep) = ep_square
-            && ep == capture_pos
-        {
-            moves.push(Move::new(EnPassant, pos, capture_pos));
-            continue; // EP square is always empty and non-promotion
-        }
-
-        if !enemy.is_set(capture_pos) {
-            // Cannot capture on an empty square
-            continue;
-        }
-
-        if (1..7).contains(&capture_pos.row()) {
-            moves.push(Move::new(Capture, pos, capture_pos));
+    };
+    for attacked_square in (PAWN_ATTACKS[colour as usize][pos.idx()] & (enemy | ep_bb)).iter() {
+        if Some(attacked_square) == ep_square {
+            moves.push(Move::new(EnPassant, pos, attacked_square));
+        } else if (1..7).contains(&attacked_square.row()) {
+            moves.push(Move::new(Capture, pos, attacked_square));
         } else {
             for variant in CAPTURE_PROMOTION_VARIANTS {
-                moves.push(Move::new(variant, pos, capture_pos));
+                moves.push(Move::new(variant, pos, attacked_square));
             }
         }
     }
