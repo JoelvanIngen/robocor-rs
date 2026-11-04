@@ -240,10 +240,8 @@ impl Board {
             return Draw;
         }
         let legal_moves = self.generate_moves();
-        if self.is_bb_attacked(
-            self.turn.other(),
-            self.get_bitboard(Piece::new(King, self.turn)),
-        ) && legal_moves.is_empty()
+        if self.is_bb_attacked(self.turn, self.get_bitboard(Piece::new(King, self.turn)))
+            && legal_moves.is_empty()
         {
             // Checkmate
             return Won(self.turn.other());
