@@ -8,3 +8,4 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-03,2,9ede26c0bd9a8963af3ce45b7a8dfdd43e7841c1,apply_move refactor,,0.47147,11.43
 2026-11-03,3,24c5a0a480243e3aeeb9dce2fd20f9bf60182284,move compression,,0.48627,11.83
 2026-11-03,4,66f4a1b64896aa14a9d3b93e277280f94267824e,aggressive inlining,,0.42518,10.24
+2026-11-04,1,80399570bb13753d3b39e2c80bb6ddeec43bbaf0,pawn attack lookup table,,0.36966,9.11
