@@ -1,5 +1,5 @@
 use crate::board::move_gen::{
-    get_attacks_bishop, get_attacks_king, get_attacks_knight, get_attacks_queen, get_attacks_rook,
+    get_attacks_bishop, get_attacks_king, get_attacks_knight, get_attacks_rook,
     get_pl_moves_bishop, get_pl_moves_king, get_pl_moves_pawn, get_pl_moves_queen,
     get_pl_moves_rook, is_square_attacked,
 };
@@ -119,6 +119,9 @@ impl Board {
         let enemy_knights = self.get_bitboard(Piece::new(Knight, enemy_colour));
         let enemy_pawns = self.get_bitboard(Piece::new(Pawn, enemy_colour));
 
+        let enemy_orthogonal_movers = enemy_queens | enemy_rooks;
+        let enemy_diagonal_movers = enemy_queens | enemy_bishops;
+
         // King
         if get_attacks_king(
             self.get_bitboard(Piece::new(King, enemy_colour))
@@ -130,14 +133,12 @@ impl Board {
             return true;
         }
 
+        // Other pieces
         for sq in target_bb.iter() {
-            if get_attacks_queen(sq, friendly, enemy) & enemy_queens != BitBoard::EMPTY {
+            if get_attacks_rook(sq, friendly, enemy) & enemy_orthogonal_movers != BitBoard::EMPTY {
                 return true;
             }
-            if get_attacks_rook(sq, friendly, enemy) & enemy_rooks != BitBoard::EMPTY {
-                return true;
-            }
-            if get_attacks_bishop(sq, friendly, enemy) & enemy_bishops != BitBoard::EMPTY {
+            if get_attacks_bishop(sq, friendly, enemy) & enemy_diagonal_movers != BitBoard::EMPTY {
                 return true;
             }
             // TODO: The friendly bitboard is irrelevant here, should refactor so we can omit it
