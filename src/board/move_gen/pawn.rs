@@ -29,25 +29,29 @@ const PAWN_ATTACKS: [[BitBoard; 64]; 2] = [pawn_attacks(White), pawn_attacks(Bla
 const fn pawn_attacks(colour: PieceColour) -> [BitBoard; 64] {
     let mut attacks = [BitBoard::EMPTY; 64];
 
-    let (ld, rd) = match colour {
-        White => (7, 9),
-        Black => (-9, -7),
-    };
-
-    // Pawns cannot exist on first or last row
-    let mut idx = 8;
-    while idx < 56 {
+    // Pawns cannot exist on first or last row but data is still needed
+    // for hypothetical pawns for in_check checking
+    let mut idx = 0;
+    while idx < 64 {
+        let row = idx as i8 / 8;
         let col = idx as i8 % 8;
-        if col == 0 {
-            // Attack right
-            attacks[idx].set_idx((idx as i8 + rd) as usize);
-        } else if col == 7 {
-            // Attack left
-            attacks[idx].set_idx((idx as i8 + ld) as usize);
-        } else {
-            // Attack both
-            attacks[idx].set_idx((idx as i8 + ld) as usize);
-            attacks[idx].set_idx((idx as i8 + rd) as usize);
+
+        let target_row = match colour {
+            White => row + 1,
+            Black => row - 1,
+        };
+
+        if target_row >= 0 && target_row < 8 {
+            let mut bb = BitBoard::EMPTY;
+            if col > 0 {
+                // Attack left
+                bb.set_idx((target_row * 8 + col - 1) as usize);
+            }
+            if col < 7 {
+                // Attack right
+                bb.set_idx((target_row * 8 + col + 1) as usize);
+            }
+            attacks[idx] = bb;
         }
 
         idx += 1;
@@ -56,7 +60,19 @@ const fn pawn_attacks(colour: PieceColour) -> [BitBoard; 64] {
     attacks
 }
 
-pub fn get_attacks_pawn(pos: Square, friendly: BitBoard, colour: PieceColour) -> BitBoard {
+/// Checking if a square is attacked can be done cheap if the roles are reversed
+/// A square is attacked by an enemy pawn if a hypothetical friendly pawn on the
+/// check square would attack any enemy pawn
+/// pos: square to check
+/// enemy: the pawns that might or might not attack the target square
+/// colour: colour of the friendly side
+#[inline(always)]
+pub fn is_square_attacked(pos: Square, enemy_pawns: BitBoard, colour: PieceColour) -> bool {
+    get_attacks_pawn(pos, colour) & enemy_pawns != BitBoard::EMPTY
+}
+
+#[inline(always)]
+pub fn get_attacks_pawn(pos: Square, colour: PieceColour) -> BitBoard {
     PAWN_ATTACKS[colour as usize][pos.idx()]
 }
 
