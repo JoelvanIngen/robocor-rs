@@ -1,7 +1,7 @@
 use crate::board::move_gen::{
-    get_attacks_bishop, get_attacks_king, get_attacks_knight, get_attacks_pawn, get_attacks_queen,
-    get_attacks_rook, get_pl_moves_bishop, get_pl_moves_king, get_pl_moves_pawn,
-    get_pl_moves_queen, get_pl_moves_rook,
+    get_attacks_bishop, get_attacks_king, get_attacks_knight, get_attacks_queen, get_attacks_rook,
+    get_pl_moves_bishop, get_pl_moves_king, get_pl_moves_pawn, get_pl_moves_queen,
+    get_pl_moves_rook, is_square_attacked,
 };
 use crate::board::moves::MoveKind::{KingCastle, QueenCastle};
 use crate::board::moves::{Move, MoveKind, MoveList};
@@ -166,16 +166,14 @@ impl Board {
         };
 
         // Pawns
-        if target_bb
-            & self
-                .get_bitboard(Piece::new(Pawn, colour))
-                .iter()
-                .map(|s| get_attacks_pawn(s, friendly, colour))
-                .collect()
-            != BitBoard::EMPTY
-        {
-            return true;
-        };
+        let attacker_pawns = self.get_bitboard(Piece::new(Pawn, colour));
+        let defender_colour = colour.other();
+
+        for square in target_bb.iter() {
+            if is_square_attacked(square, attacker_pawns, defender_colour) {
+                return true;
+            }
+        }
 
         false
     }
