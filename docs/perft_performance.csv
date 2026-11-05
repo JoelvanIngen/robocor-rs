@@ -12,3 +12,4 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-04,2,19f34d9e97171b28511125708db77d34d33c6686,reverse pawn check,,0.34983,8.46
 2026-11-04,3,bcb02194172257b72a557ea90342b4a6c78ee324,reverse piece checks,,0.26984,6.27
 2026-11-04,4,397e4f077de86b9d04a0809bb8737d03361162d0,combine queen checks with bishops/rooks,,0.21304,4.90
+2026-11-05,1,d5ddc65d48f08add716440286c967a118d6ca17a,find pl pieces from bitboards instead of array,,0.189821,4.615501
