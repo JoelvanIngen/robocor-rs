@@ -8,7 +8,6 @@ use crate::board::moves::{Move, MoveKind, MoveList};
 use crate::board::piece::PieceColour::{Black, White};
 use crate::board::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::board::piece::{Piece, PieceColour};
-use crate::board::square::BOARD_SQUARES;
 use crate::board::{BitBoard, Board, get_pl_moves_knight};
 
 impl Board {
@@ -16,6 +15,7 @@ impl Board {
     pub fn generate_pl_moves(&self, colour: PieceColour) -> MoveList {
         let mut moves = MoveList::new();
 
+        let piece_bitboard = self.bitboards[colour as usize];
         let (friendly, enemy) = match colour {
             White => (
                 self.get_colour_bitboard(White),
@@ -27,35 +27,41 @@ impl Board {
             ),
         };
 
-        for pos in BOARD_SQUARES {
-            let piece = match self.get_piece(pos) {
-                Some(p) => p,
-                None => continue,
-            };
-            if piece.colour != colour {
-                continue;
-            }
-            match piece.kind {
-                Bishop => get_pl_moves_bishop(&mut moves, pos, friendly, enemy),
-                King => get_pl_moves_king(
-                    &mut moves,
-                    pos,
-                    friendly,
-                    enemy,
-                    self.get_castling_rights(colour),
-                ),
-                Knight => get_pl_moves_knight(&mut moves, pos, friendly, enemy),
-                Pawn => get_pl_moves_pawn(
-                    &mut moves,
-                    pos,
-                    friendly,
-                    enemy,
-                    colour,
-                    self.en_passant_square(),
-                ),
-                Queen => get_pl_moves_queen(&mut moves, pos, friendly, enemy),
-                Rook => get_pl_moves_rook(&mut moves, pos, friendly, enemy),
-            }
+        for pos in piece_bitboard[Bishop as usize].iter() {
+            get_pl_moves_bishop(&mut moves, pos, friendly, enemy)
+        }
+
+        for pos in piece_bitboard[King as usize].iter() {
+            get_pl_moves_king(
+                &mut moves,
+                pos,
+                friendly,
+                enemy,
+                self.get_castling_rights(colour),
+            )
+        }
+
+        for pos in piece_bitboard[Knight as usize].iter() {
+            get_pl_moves_knight(&mut moves, pos, friendly, enemy)
+        }
+
+        for pos in piece_bitboard[Pawn as usize].iter() {
+            get_pl_moves_pawn(
+                &mut moves,
+                pos,
+                friendly,
+                enemy,
+                colour,
+                self.en_passant_square(),
+            )
+        }
+
+        for pos in piece_bitboard[Queen as usize].iter() {
+            get_pl_moves_queen(&mut moves, pos, friendly, enemy)
+        }
+
+        for pos in piece_bitboard[Rook as usize].iter() {
+            get_pl_moves_rook(&mut moves, pos, friendly, enemy)
         }
 
         moves

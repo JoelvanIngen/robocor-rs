@@ -28,7 +28,7 @@ pub enum GameState {
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Board {
     // 2D array bitboard[colour][piece]
-    bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
+    pub(super) bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
     piece_at: [[Option<Piece>; 8]; 8],
     pub(super) turn: PieceColour,
     castling_rights: BitBoard,
