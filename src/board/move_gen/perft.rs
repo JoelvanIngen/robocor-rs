@@ -13,7 +13,7 @@ pub fn perft(depth: u8) {
     println!(
         "{} in {}ms ({} nodes/second)",
         n_moves,
-        duration.as_millis(),
+        duration.as_micros() as f32 / 1000f32,
         n_moves as f32 / duration.as_secs_f32()
     );
 }
