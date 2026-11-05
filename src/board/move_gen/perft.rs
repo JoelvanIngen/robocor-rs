@@ -1,9 +1,21 @@
 use crate::board::Board;
+use std::time::Instant;
 
 pub fn perft(depth: u8) {
     let board = Board::start_position();
+
+    let start_time = Instant::now();
     let n_moves = calc_positions(board, depth);
-    println!("{}", n_moves);
+    let end_time = Instant::now();
+
+    let duration = end_time - start_time;
+
+    println!(
+        "{} in {}ms ({} nodes/second)",
+        n_moves,
+        duration.as_millis(),
+        n_moves as f32 / duration.as_secs_f32()
+    );
 }
 
 /// Recursively calculates the number of positions
