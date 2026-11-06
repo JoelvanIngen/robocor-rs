@@ -125,12 +125,12 @@ fn get_pl_castling_moves(
             moves.push(Move::new(
                 QueenCastle,
                 pos,
-                Square::from_coords(co.row(), 0),
+                Square::from_coords(co.row(), 2),
             ));
         }
         if co.col() == 7 && KINGSIDE_CASTLE_SQUARES[colour_idx] & full_bb == BitBoard::EMPTY {
             // Kingside
-            moves.push(Move::new(KingCastle, pos, Square::from_coords(co.row(), 7)));
+            moves.push(Move::new(KingCastle, pos, Square::from_coords(co.row(), 6)));
         }
     }
 }
@@ -210,8 +210,8 @@ mod tests {
         let enemy = BitBoard::EMPTY;
 
         let want = vec![
-            Move::new(QueenCastle, orig_square, Square::from_coords(0, 0)),
-            Move::new(KingCastle, orig_square, Square::from_coords(0, 7)),
+            Move::new(QueenCastle, orig_square, Square::from_coords(0, 2)),
+            Move::new(KingCastle, orig_square, Square::from_coords(0, 6)),
         ];
         let mut got = MoveList::new();
         get_pl_castling_moves(
