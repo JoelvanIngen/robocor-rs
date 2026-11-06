@@ -1,7 +1,7 @@
-use crate::board::move_gen::bishop::{get_attacks_bishop, get_pl_moves_bishop};
-use crate::board::move_gen::rook::{get_attacks_rook, get_pl_moves_rook};
-use crate::board::moves::MoveList;
 use crate::board::{BitBoard, Square};
+use crate::chess::moves::MoveList;
+use crate::move_gen::bishop::{get_attacks_bishop, get_pl_moves_bishop};
+use crate::move_gen::rook::{get_attacks_rook, get_pl_moves_rook};
 
 pub fn get_attacks_queen(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
     get_attacks_rook(pos, friendly, enemy) | get_attacks_bishop(pos, friendly, enemy)

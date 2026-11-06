@@ -1,7 +1,7 @@
-use crate::board::bitboard::BitBoard;
-use crate::board::moves::MoveKind::{Capture, QuietMove};
-use crate::board::moves::{Move, MoveList};
-use crate::board::square::Square;
+use crate::chess::bitboard::BitBoard;
+use crate::chess::moves::MoveKind::{Capture, QuietMove};
+use crate::chess::moves::{Move, MoveList};
+use crate::chess::square::Square;
 
 const KNIGHT_DELTAS: [(i8, i8); 8] = [
     (-2, 1),

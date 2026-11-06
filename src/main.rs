@@ -1,14 +1,17 @@
-use crate::board::perft;
 use crate::cli::Behaviour;
 use crate::engine::Engine;
+use crate::perft::perft;
 use std::sync::mpsc::channel;
 use std::thread::spawn;
 use uci::Command;
 
 mod board;
+mod chess;
 mod cli;
 mod engine;
 mod error;
+mod move_gen;
+mod perft;
 mod uci;
 
 fn main() {

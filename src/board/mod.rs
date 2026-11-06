@@ -1,14 +1,32 @@
-mod bitboard;
-mod board;
+mod attacks;
 mod display;
-mod move_gen;
+mod fen;
 mod move_generation;
-mod moves;
-mod piece;
-mod square;
+mod position;
 
-pub use bitboard::BitBoard;
-pub use board::Board;
-pub use move_gen::get_pl_moves_knight;
-pub use move_gen::perft;
-pub use square::Square;
+pub use crate::chess::bitboard::BitBoard;
+use crate::chess::piece::{Piece, PieceColour, PieceKind};
+pub use crate::chess::square::Square;
+pub use crate::move_gen::get_pl_moves_knight;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct Board {
+    // 2D array bitboard[colour][piece]
+    bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
+    piece_at: [[Option<Piece>; 8]; 8],
+    turn: PieceColour,
+    castling_rights: BitBoard,
+    en_passant: BitBoard,
+    halfmove_clock: u8, // Max value 50
+    fullmove_number: u16,
+
+    colour_bitboards: [BitBoard; 2],
+}
+
+fn combine_bitboards(bitboards: [BitBoard; 6]) -> BitBoard {
+    let mut res = BitBoard::EMPTY;
+    for bb in bitboards {
+        res |= bb;
+    }
+    res
+}

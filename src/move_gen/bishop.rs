@@ -1,6 +1,6 @@
-use crate::board::move_gen::common::{get_attacks_sliding, get_pl_moves_sliding};
-use crate::board::moves::MoveList;
 use crate::board::{BitBoard, Square};
+use crate::chess::moves::MoveList;
+use crate::move_gen::common::{get_attacks_sliding, get_pl_moves_sliding};
 
 const DIRECTIONS: [(i8, i8); 4] = [
     // (row delta, col delta)
@@ -21,8 +21,8 @@ pub fn get_pl_moves_bishop(moves: &mut MoveList, pos: Square, friendly: BitBoard
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::moves::Move;
-    use crate::board::moves::MoveKind::{Capture, QuietMove};
+    use crate::chess::moves::Move;
+    use crate::chess::moves::MoveKind::{Capture, QuietMove};
     use std::str::FromStr;
 
     struct TestCase {

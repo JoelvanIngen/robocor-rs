@@ -1,7 +1,8 @@
-use crate::board::piece::PieceColour::{Black, White};
-use crate::board::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
+use crate::chess::piece::PieceColour::{Black, White};
+use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::error::FenError;
 use crate::error::FenError::InvalidFenPiece;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
@@ -87,5 +88,27 @@ impl TryFrom<char> for Piece {
             kind: PieceKind::try_from(c)?,
             colour: PieceColour::try_from(c)?,
         })
+    }
+}
+
+impl Display for Piece {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let piece_char = match self.kind {
+            King => 'K',
+            Queen => 'Q',
+            Rook => 'R',
+            Bishop => 'B',
+            Knight => 'N',
+            Pawn => 'P',
+        };
+
+        write!(
+            f,
+            "{}",
+            match self.colour {
+                White => piece_char,
+                Black => piece_char.to_ascii_lowercase(),
+            }
+        )
     }
 }

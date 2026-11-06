@@ -1,12 +1,12 @@
-use crate::board::moves::MoveKind::{
+use crate::board::{BitBoard, Square};
+use crate::chess::moves::MoveKind::{
     BishopPromotion, BishopPromotionCapture, Capture, DoublePawnPush, EnPassant, KnightPromotion,
     KnightPromotionCapture, QueenPromotion, QueenPromotionCapture, QuietMove, RookPromotion,
     RookPromotionCapture,
 };
-use crate::board::moves::{Move, MoveKind, MoveList};
-use crate::board::piece::PieceColour;
-use crate::board::piece::PieceColour::{Black, White};
-use crate::board::{BitBoard, Square};
+use crate::chess::moves::{Move, MoveKind, MoveList};
+use crate::chess::piece::PieceColour;
+use crate::chess::piece::PieceColour::{Black, White};
 
 const PROMOTION_VARIANTS: [MoveKind; 4] = [
     KnightPromotion,
@@ -142,16 +142,16 @@ pub fn get_pl_moves_pawn(
 
 #[cfg(test)]
 mod test {
-    use crate::board::move_gen::pawn::get_pl_moves_pawn;
-    use crate::board::moves::MoveKind::{
+    use crate::board::{BitBoard, Square};
+    use crate::chess::moves::MoveKind::{
         BishopPromotion, BishopPromotionCapture, Capture, DoublePawnPush, KnightPromotion,
         KnightPromotionCapture, QueenPromotion, QueenPromotionCapture, QuietMove, RookPromotion,
         RookPromotionCapture,
     };
-    use crate::board::moves::{Move, MoveList};
-    use crate::board::piece::PieceColour;
-    use crate::board::piece::PieceColour::{Black, White};
-    use crate::board::{BitBoard, Square};
+    use crate::chess::moves::{Move, MoveList};
+    use crate::chess::piece::PieceColour;
+    use crate::chess::piece::PieceColour::{Black, White};
+    use crate::move_gen::pawn::get_pl_moves_pawn;
     use std::str::FromStr;
 
     struct PawnTestCase {

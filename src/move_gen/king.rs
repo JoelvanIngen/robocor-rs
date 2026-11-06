@@ -1,7 +1,7 @@
 use crate::board::Square;
-use crate::board::bitboard::BitBoard;
-use crate::board::moves::MoveKind::{Capture, KingCastle, QueenCastle, QuietMove};
-use crate::board::moves::{Move, MoveList};
+use crate::chess::bitboard::BitBoard;
+use crate::chess::moves::MoveKind::{Capture, KingCastle, QueenCastle, QuietMove};
+use crate::chess::moves::{Move, MoveList};
 
 const KING_DELTAS: [(i8, i8); 8] = [
     // (ROW, COL)

@@ -1,6 +1,6 @@
-use crate::board::moves::MoveKind::{Capture, QuietMove};
-use crate::board::moves::{Move, MoveList};
 use crate::board::{BitBoard, Square};
+use crate::chess::moves::MoveKind::{Capture, QuietMove};
+use crate::chess::moves::{Move, MoveList};
 
 pub fn get_attacks_sliding(
     pos: Square,

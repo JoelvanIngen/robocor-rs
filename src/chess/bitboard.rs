@@ -1,5 +1,8 @@
-use crate::board::square::Square;
+use crate::board::Square;
+use std::fmt::{Display, Formatter};
 use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, Not};
+
+pub const BOARD_DIVIDER: &str = "  +---+---+---+---+---+---+---+---+";
 
 /// Little-endian https://chessprogramming.org/Little-endian
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -150,6 +153,25 @@ impl FromIterator<BitBoard> for BitBoard {
             bb |= other;
         }
         bb
+    }
+}
+
+impl Display for BitBoard {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{BOARD_DIVIDER}")?;
+        for row_idx in (0..8).rev() {
+            write!(f, "{} |", row_idx + 1)?;
+            for col_idx in 0..8 {
+                match self.is_set(Square::from_coords(row_idx, col_idx)) {
+                    true => write!(f, " * |")?,
+                    false => write!(f, "   |")?,
+                };
+            }
+            writeln!(f)?;
+            writeln!(f, "{BOARD_DIVIDER}")?;
+        }
+
+        writeln!(f, "    A   B   C   D   E   F   G   H")
     }
 }
 

@@ -1,7 +1,8 @@
 use crate::board::Board;
-use crate::board::display::BOARD_DIVIDER;
-use crate::board::square::Square;
+use crate::chess::square::Square;
 use std::fmt::{Display, Formatter};
+
+pub const BOARD_DIVIDER: &str = "  +---+---+---+---+---+---+---+---+";
 
 impl Display for Board {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {

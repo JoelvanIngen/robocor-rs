@@ -1,4 +1,4 @@
-use crate::board::square::Square;
+use crate::board::Square;
 use arrayvec::ArrayVec;
 use std::fmt::Debug;
 
