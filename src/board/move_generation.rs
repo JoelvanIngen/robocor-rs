@@ -125,6 +125,15 @@ impl Board {
         let enemy_knights = self.get_bitboard(Piece::new(Knight, enemy_colour));
         let enemy_pawns = self.get_bitboard(Piece::new(Pawn, enemy_colour));
 
+        let has_enemy_queens = enemy_queens != BitBoard::EMPTY;
+        let has_enemy_rooks = enemy_rooks != BitBoard::EMPTY;
+        let has_enemy_bishops = enemy_bishops != BitBoard::EMPTY;
+        let has_enemy_knights = enemy_knights != BitBoard::EMPTY;
+        let has_enemy_pawns = enemy_pawns != BitBoard::EMPTY;
+
+        let has_enemy_orthogonal = has_enemy_queens || has_enemy_rooks;
+        let has_enemy_diagonal = has_enemy_queens || has_enemy_bishops;
+
         let enemy_orthogonal_movers = enemy_queens | enemy_rooks;
         let enemy_diagonal_movers = enemy_queens | enemy_bishops;
 
@@ -141,17 +150,25 @@ impl Board {
 
         // Other pieces
         for sq in target_bb.iter() {
-            if get_attacks_rook(sq, friendly, enemy) & enemy_orthogonal_movers != BitBoard::EMPTY {
+            if has_enemy_orthogonal
+                && (get_attacks_rook(sq, friendly, enemy) & enemy_orthogonal_movers
+                    != BitBoard::EMPTY)
+            {
                 return true;
             }
-            if get_attacks_bishop(sq, friendly, enemy) & enemy_diagonal_movers != BitBoard::EMPTY {
+            if has_enemy_diagonal
+                && (get_attacks_bishop(sq, friendly, enemy) & enemy_diagonal_movers
+                    != BitBoard::EMPTY)
+            {
                 return true;
             }
             // TODO: The friendly bitboard is irrelevant here, should refactor so we can omit it
-            if get_attacks_knight(sq, BitBoard::EMPTY) & enemy_knights != BitBoard::EMPTY {
+            if has_enemy_knights
+                && (get_attacks_knight(sq, BitBoard::EMPTY) & enemy_knights != BitBoard::EMPTY)
+            {
                 return true;
             }
-            if is_square_attacked(sq, enemy_pawns, colour) {
+            if has_enemy_pawns && is_square_attacked(sq, enemy_pawns, colour) {
                 return true;
             }
         }
