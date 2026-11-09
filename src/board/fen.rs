@@ -15,7 +15,6 @@ impl Board {
 
     pub fn from_fen(fen: &str) -> Result<Board, FenError> {
         let mut bitboards = [[BitBoard::EMPTY; PieceKind::COUNT]; PieceColour::COUNT];
-        let mut piece_at: [[Option<Piece>; 8]; 8] = [[None; 8]; 8];
 
         let mut fen_parts = fen.split_whitespace();
 
@@ -34,7 +33,6 @@ impl Board {
                     let piece = Piece::try_from(char)?;
                     bitboards[piece.colour as usize][piece.kind as usize]
                         .set(Square::from_coords(row_idx, col_idx));
-                    piece_at[row_idx][col_idx] = Some(piece);
                     col_idx += 1;
                 }
             }
@@ -93,7 +91,6 @@ impl Board {
 
         Ok(Board {
             bitboards,
-            piece_at,
             turn,
             castling_rights,
             en_passant,

@@ -17,6 +17,8 @@ pub enum PieceKind {
 
 impl PieceKind {
     pub const COUNT: usize = 6;
+
+    pub const ALL: [Self; Self::COUNT] = [King, Queen, Rook, Bishop, Knight, Pawn];
 }
 
 impl TryFrom<char> for PieceKind {
@@ -44,6 +46,8 @@ pub enum PieceColour {
 
 impl PieceColour {
     pub const COUNT: usize = 2;
+
+    pub const ALL: [Self; Self::COUNT] = [White, Black];
 }
 
 impl PieceColour {

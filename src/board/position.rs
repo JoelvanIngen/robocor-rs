@@ -7,9 +7,9 @@ use crate::chess::moves::MoveKind::{
     KnightPromotion, KnightPromotionCapture, QueenCastle, QueenPromotion, QueenPromotionCapture,
     RookPromotion, RookPromotionCapture,
 };
-use crate::chess::piece::PieceColour::Black;
-use crate::chess::piece::PieceKind::{Bishop, King, Knight, Queen, Rook};
-use crate::chess::piece::{Piece, PieceColour};
+use crate::chess::piece::PieceColour::{Black, White};
+use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
+use crate::chess::piece::{Piece, PieceColour, PieceKind};
 use crate::chess::square::Square;
 use crate::move_gen::CASTLING_MASK;
 
@@ -21,31 +21,46 @@ pub enum GameState {
 }
 
 impl Board {
+    #[inline(always)]
     fn set_piece(&mut self, piece: Piece, square: Square) {
         self.bitboards[piece.colour as usize][piece.kind as usize].set(square);
-        self.piece_at[square.row()][square.col()] = Some(piece);
         self.colour_bitboards[piece.colour as usize].set(square);
     }
 
-    /// Removes a piece from both the BitBoard and the `piece_set` array,
-    /// and ensures they stay in sync
     /// Piece must already be set
-    fn unset_piece(&mut self, square: Square) -> Piece {
-        let piece = self.piece_at[square.row()][square.col()]
-            .expect("trying to unset a piece from an empty square");
+    #[inline(always)]
+    fn unset_piece(&mut self, piece: Piece, square: Square) {
+        debug_assert!(
+            self.get_piece(square).is_some(),
+            "trying to unset a piece from an empty square"
+        );
         self.bitboards[piece.colour as usize][piece.kind as usize].unset(square);
-        self.piece_at[square.row()][square.col()] = None;
         self.colour_bitboards[piece.colour as usize].unset(square);
-        piece
     }
 
+    /// TODO(opt): Create separate function for known colour
+    #[inline(always)]
     pub fn get_piece(&self, square: Square) -> Option<Piece> {
-        self.piece_at[square.row()][square.col()]
+        let idx = square.idx();
+
+        let colour = if self.colour_bitboards[White as usize].is_set_idx(idx) {
+            White
+        } else if self.colour_bitboards[Black as usize].is_set_idx(idx) {
+            Black
+        } else {
+            return None;
+        };
+
+        for kind in PieceKind::ALL {
+            if self.bitboards[colour as usize][kind as usize].is_set_idx(idx) {
+                return Some(Piece::new(kind, colour));
+            }
+        }
+
+        panic!("piece exists in colour_bitboard but not in specific bitboard")
     }
 
     pub fn apply_move(&mut self, m: Move) {
-        debug_assert!(self.get_piece(m.from()).is_some(), "Moving piece not found");
-
         let kind = m.kind();
         let from = m.from();
         let to = m.to();
@@ -54,13 +69,18 @@ impl Board {
         if kind == EnPassant {
             // En-passant-ed piece must be on the starting row of the capturing piece
             let captured_row = from.row();
-            self.unset_piece(Square::from_coords(captured_row, to.col()));
+            self.unset_piece(
+                Piece::new(Pawn, self.turn.other()),
+                Square::from_coords(captured_row, to.col()),
+            );
         } else if m.is_capture() {
-            self.unset_piece(to);
+            let captured_piece = self.get_piece(to).unwrap();
+            self.unset_piece(captured_piece, to);
         }
 
         // Move piece and handle promotion
-        let moving_piece = self.unset_piece(from);
+        let moving_piece = self.get_piece(from).unwrap();
+        self.unset_piece(moving_piece, from);
         let final_piece = if m.is_promotion() {
             let kind = match kind {
                 QueenPromotionCapture | QueenPromotion => Queen,
@@ -79,11 +99,13 @@ impl Board {
         // King has already moved
         if kind == QueenCastle {
             let row = from.row();
-            let rook = self.unset_piece(Square::from_coords(row, 0));
+            let rook = Piece::new(Rook, self.turn);
+            self.unset_piece(rook, Square::from_coords(row, 0));
             self.set_piece(rook, Square::from_coords(row, 3));
         } else if kind == KingCastle {
             let row = from.row();
-            let rook = self.unset_piece(Square::from_coords(row, 7));
+            let rook = Piece::new(Rook, self.turn);
+            self.unset_piece(rook, Square::from_coords(row, 7));
             self.set_piece(rook, Square::from_coords(row, 5));
         }
 

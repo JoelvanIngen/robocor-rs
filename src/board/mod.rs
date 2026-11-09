@@ -5,7 +5,7 @@ mod move_generation;
 mod position;
 
 pub use crate::chess::bitboard::BitBoard;
-use crate::chess::piece::{Piece, PieceColour, PieceKind};
+use crate::chess::piece::{PieceColour, PieceKind};
 pub use crate::chess::square::Square;
 pub use crate::move_gen::get_pl_moves_knight;
 
@@ -13,7 +13,6 @@ pub use crate::move_gen::get_pl_moves_knight;
 pub struct Board {
     // 2D array bitboard[colour][piece]
     bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
-    piece_at: [[Option<Piece>; 8]; 8],
     turn: PieceColour,
     castling_rights: BitBoard,
     en_passant: BitBoard,
