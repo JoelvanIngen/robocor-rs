@@ -20,7 +20,7 @@ Done, perft tests indicate correct move generation
 
 ### Evaluation
 
-Not started yet
+Work in progress
 
 ### Search
 

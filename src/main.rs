@@ -10,6 +10,7 @@ mod chess;
 mod cli;
 mod engine;
 mod error;
+mod eval;
 mod move_gen;
 mod perft;
 mod uci;

@@ -14,6 +14,8 @@ use crate::chess::square::Square;
 use crate::move_gen::CASTLING_MASK;
 use arrayvec::ArrayVec;
 
+type PieceList = ArrayVec<Piece, 32>;
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum GameState {
     Ongoing,
@@ -216,6 +218,18 @@ impl Board {
             }
         }
         options
+    }
+
+    pub fn get_pieces(&self) -> PieceList {
+        let mut pieces = PieceList::new();
+        for colour in PieceColour::ALL {
+            for kind in PieceKind::ALL {
+                for _ in 0..self.bitboards[colour as usize][kind as usize].count() {
+                    pieces.push(Piece::new(kind, colour));
+                }
+            }
+        }
+        pieces
     }
 }
 
