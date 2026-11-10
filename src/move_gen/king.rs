@@ -2,6 +2,7 @@ use crate::board::Square;
 use crate::chess::bitboard::BitBoard;
 use crate::chess::moves::MoveKind::{Capture, KingCastle, QueenCastle, QuietMove};
 use crate::chess::moves::{Move, MoveList};
+use arrayvec::ArrayVec;
 
 const KING_DELTAS: [(i8, i8); 8] = [
     // (ROW, COL)
@@ -88,7 +89,7 @@ pub fn get_pl_moves_king(
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
-    castling_options: Vec<Square>,
+    castling_options: ArrayVec<Square, 2>,
 ) {
     let targets = get_attacks_king(pos, friendly);
     let captures = targets & enemy;
@@ -110,7 +111,7 @@ fn get_pl_castling_moves(
     pos: Square,
     friendly: BitBoard,
     enemy: BitBoard,
-    castling_options: Vec<Square>,
+    castling_options: ArrayVec<Square, 2>,
 ) {
     let full_bb = friendly | enemy;
     for co in castling_options {
@@ -153,7 +154,7 @@ mod tests {
             orig_square,
             BitBoard::EMPTY,
             BitBoard::EMPTY,
-            vec![],
+            ArrayVec::<Square, 2>::new(),
         );
 
         assert_eq!(
@@ -175,7 +176,13 @@ mod tests {
         friendly.set(Square::from_coords(1, 1));
 
         let mut moves = MoveList::new();
-        get_pl_moves_king(&mut moves, orig_square, friendly, BitBoard::EMPTY, vec![]);
+        get_pl_moves_king(
+            &mut moves,
+            orig_square,
+            friendly,
+            BitBoard::EMPTY,
+            ArrayVec::<Square, 2>::new(),
+        );
         assert_eq!(moves.len(), 0, "is moving through friendly pieces");
     }
 
@@ -188,13 +195,19 @@ mod tests {
         enemy.set(Square::from_coords(1, 0));
         enemy.set(Square::from_coords(1, 1));
 
-        let want = vec![
+        let want = ArrayVec::from([
             Move::new(Capture, orig_square, Square::from_coords(0, 1)),
             Move::new(Capture, orig_square, Square::from_coords(1, 0)),
             Move::new(Capture, orig_square, Square::from_coords(1, 1)),
-        ];
+        ]);
         let mut got = MoveList::new();
-        get_pl_moves_king(&mut got, orig_square, friendly, enemy, vec![]);
+        get_pl_moves_king(
+            &mut got,
+            orig_square,
+            friendly,
+            enemy,
+            ArrayVec::<Square, 2>::new(),
+        );
 
         assert_eq!(want.len(), got.len());
         for m in want {
@@ -219,7 +232,7 @@ mod tests {
             orig_square,
             friendly,
             enemy,
-            vec![Square::from_coords(0, 0), Square::from_coords(0, 7)],
+            ArrayVec::from([Square::from_coords(0, 0), Square::from_coords(0, 7)]),
         );
 
         assert_eq!(want.len(), got.len());
@@ -245,7 +258,7 @@ mod tests {
             orig_square,
             friendly,
             enemy,
-            vec![Square::from_coords(0, 0), Square::from_coords(0, 7)],
+            ArrayVec::from([Square::from_coords(0, 0), Square::from_coords(0, 7)]),
         );
 
         assert_eq!(want.len(), got.len());

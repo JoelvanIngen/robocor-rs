@@ -12,6 +12,7 @@ use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::chess::piece::{Piece, PieceColour, PieceKind};
 use crate::chess::square::Square;
 use crate::move_gen::CASTLING_MASK;
+use arrayvec::ArrayVec;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum GameState {
@@ -190,8 +191,8 @@ impl Board {
         &mut self.bitboards[piece.colour as usize][piece.kind as usize]
     }
 
-    pub fn get_castling_rights(&self, colour: PieceColour) -> Vec<Square> {
-        let mut options = Vec::with_capacity(2);
+    pub fn get_castling_rights(&self, colour: PieceColour) -> ArrayVec<Square, 2> {
+        let mut options = ArrayVec::<Square, 2>::new();
         match colour {
             White => {
                 let queenside = Square::from_coords(0, 0);
