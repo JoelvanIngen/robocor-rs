@@ -193,7 +193,7 @@ impl Board {
     pub fn get_castling_rights(&self, colour: PieceColour) -> Vec<Square> {
         let mut options = Vec::with_capacity(2);
         match colour {
-            PieceColour::White => {
+            White => {
                 let queenside = Square::from_coords(0, 0);
                 let kingside = Square::from_coords(0, 7);
                 if self.castling_rights.is_set(queenside) {
@@ -203,7 +203,7 @@ impl Board {
                     options.push(kingside);
                 }
             }
-            PieceColour::Black => {
+            Black => {
                 let queenside = Square::from_coords(7, 0);
                 let kingside = Square::from_coords(7, 7);
                 if self.castling_rights.is_set(queenside) {
