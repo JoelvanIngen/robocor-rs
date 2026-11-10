@@ -64,8 +64,13 @@ impl BitBoard {
     /// Can only be used if single bit is set
     #[inline(always)]
     pub fn get_square(&self) -> Square {
+        Square::from_index(self.get_square_idx())
+    }
+
+    #[inline(always)]
+    pub fn get_square_idx(&self) -> usize {
         debug_assert_eq!(self.count(), 1, "More than one square set in bitmap");
-        Square::from_index(self.0.trailing_zeros() as usize)
+        self.0.trailing_zeros() as usize
     }
 
     #[inline(always)]
