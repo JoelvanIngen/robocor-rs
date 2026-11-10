@@ -13,6 +13,7 @@ mod error;
 mod eval;
 mod move_gen;
 mod perft;
+mod search;
 mod uci;
 
 fn main() {
