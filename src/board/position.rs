@@ -38,7 +38,6 @@ impl Board {
         self.colour_bitboards[piece.colour as usize].unset(square);
     }
 
-    /// TODO(opt): Create separate function for known colour
     #[inline(always)]
     pub fn get_piece(&self, square: Square) -> Option<Piece> {
         let idx = square.idx();
@@ -51,9 +50,18 @@ impl Board {
             return None;
         };
 
+        Some(self.get_colour_piece(square, colour))
+    }
+
+    /// Retrieves a piece from a square if the piece colour is known
+    /// A piece of the provided colour must exist on the square
+    #[inline(always)]
+    fn get_colour_piece(&self, square: Square, colour: PieceColour) -> Piece {
+        let idx = square.idx();
+
         for kind in PieceKind::ALL {
             if self.bitboards[colour as usize][kind as usize].is_set_idx(idx) {
-                return Some(Piece::new(kind, colour));
+                return Piece::new(kind, colour);
             }
         }
 
@@ -65,6 +73,9 @@ impl Board {
         let from = m.from();
         let to = m.to();
 
+        let friendly_colour = self.turn;
+        let enemy_colour = self.turn.other();
+
         // Captures
         if kind == EnPassant {
             // En-passant-ed piece must be on the starting row of the capturing piece
@@ -74,12 +85,12 @@ impl Board {
                 Square::from_coords(captured_row, to.col()),
             );
         } else if m.is_capture() {
-            let captured_piece = self.get_piece(to).unwrap();
+            let captured_piece = self.get_colour_piece(to, enemy_colour);
             self.unset_piece(captured_piece, to);
         }
 
         // Move piece and handle promotion
-        let moving_piece = self.get_piece(from).unwrap();
+        let moving_piece = self.get_colour_piece(from, friendly_colour);
         self.unset_piece(moving_piece, from);
         let final_piece = if m.is_promotion() {
             let kind = match kind {
