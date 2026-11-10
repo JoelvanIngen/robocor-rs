@@ -15,3 +15,6 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-05,1,d5ddc65d48f08add716440286c967a118d6ca17a,find pl pieces from bitboards instead of array,,0.189821,4.615501
 2026-11-05,2,d0cb8fd2d8ab9c4e56e74558630cf23396fce541,make assert debug,,0.178666,4.2492
 2026-11-06,1,21d02abc3679b35f4ffecc749b99f863457d31fb,skip attack checks for absent pieces,,0.1792,4.487
+2026-11-09,1,3b5dbfe213dd16ca6520327c7daa478e59ba0d8c,remove piece grid,,0.1875,4.605
+2026-11-09,2,7f63988f2b7f5d87b50e3c6aa9935f2314d42fb0,skip colour lookup,,0.1823,4.183
+2026-11-10,1,5d88fe89b1dd30ab9908c0d1555c6ffc761ac45e,prevent heap allocation,,0.1833,4.509
