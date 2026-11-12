@@ -1,6 +1,7 @@
 mod attacks;
 mod display;
 mod fen;
+mod hashing;
 mod move_generation;
 mod position;
 
@@ -20,6 +21,8 @@ pub struct Board {
     fullmove_number: u16,
 
     colour_bitboards: [BitBoard; 2],
+
+    hash: u64,
 }
 
 fn combine_bitboards(bitboards: [BitBoard; 6]) -> BitBoard {

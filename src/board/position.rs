@@ -11,6 +11,7 @@ use crate::chess::piece::PieceColour::{Black, White};
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::chess::piece::{Piece, PieceColour, PieceKind};
 use crate::chess::square::Square;
+use crate::chess::zobrist::ZOBRIST;
 use crate::move_gen::CASTLING_MASK;
 use arrayvec::ArrayVec;
 
@@ -28,6 +29,7 @@ impl Board {
     fn set_piece(&mut self, piece: Piece, square: Square) {
         self.bitboards[piece.colour as usize][piece.kind as usize].set(square);
         self.colour_bitboards[piece.colour as usize].set(square);
+        self.hash ^= ZOBRIST.pieces[piece.colour as usize][piece.kind as usize][square.idx()];
     }
 
     /// Piece must already be set
@@ -39,6 +41,7 @@ impl Board {
         );
         self.bitboards[piece.colour as usize][piece.kind as usize].unset(square);
         self.colour_bitboards[piece.colour as usize].unset(square);
+        self.hash ^= ZOBRIST.pieces[piece.colour as usize][piece.kind as usize][square.idx()];
     }
 
     #[inline(always)]
@@ -78,6 +81,8 @@ impl Board {
 
         let friendly_colour = self.turn;
         let enemy_colour = self.turn.other();
+
+        self.update_hash();
 
         // Captures
         if kind == EnPassant {
@@ -147,6 +152,8 @@ impl Board {
 
         // Update turn
         self.turn = self.turn.other();
+
+        self.update_hash();
     }
 
     pub fn game_state(&self) -> GameState {

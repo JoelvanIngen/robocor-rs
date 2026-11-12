@@ -1,5 +1,6 @@
 use crate::board::{BitBoard, Board, Square, combine_bitboards};
 use crate::chess::piece::{Piece, PieceColour, PieceKind};
+use crate::chess::zobrist::calculate_hash;
 use crate::error::FenError;
 use crate::error::FenError::{
     InvalidBoardSetup, InvalidCastlingRights, InvalidFullmoveNumber, InvalidHalfmoveClock,
@@ -89,6 +90,8 @@ impl Board {
             combine_bitboards(bitboards[1]),
         ];
 
+        let hash = calculate_hash(bitboards, turn, castling_rights, en_passant);
+
         Ok(Board {
             bitboards,
             turn,
@@ -97,6 +100,7 @@ impl Board {
             halfmove_clock,
             fullmove_number,
             colour_bitboards,
+            hash,
         })
     }
 }
