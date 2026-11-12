@@ -20,3 +20,5 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-10,1,5d88fe89b1dd30ab9908c0d1555c6ffc761ac45e,prevent heap allocation,,0.1833,4.509
 2026-11-12,1,ce4c3f13353c9750c5671c4c8fddb48626e0a141,zobrist hashing,,0.2293,5.459
 2026-11-12,2,26d95cfb6971b81fec99e57d425631496c634837,pack castling in integer,,0.1910,4.634
+2026-11-12,3,7a3ad3cecc3577d57a3f3ebcf0337de2a7cc6eb2,rook magic bitboards,,0.1569,3.875
+2026-11-12,4,3c3a9018628885dcb701c81864185582bc4d8932,bishop magic bitboards,,0.1258,3.053
