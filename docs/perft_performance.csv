@@ -18,3 +18,4 @@ date,number,commit,comment,perft 4,perft 5,perft 6
 2026-11-09,1,3b5dbfe213dd16ca6520327c7daa478e59ba0d8c,remove piece grid,,0.1875,4.605
 2026-11-09,2,7f63988f2b7f5d87b50e3c6aa9935f2314d42fb0,skip colour lookup,,0.1823,4.183
 2026-11-10,1,5d88fe89b1dd30ab9908c0d1555c6ffc761ac45e,prevent heap allocation,,0.1833,4.509
+2026-11-12,1,ce4c3f13353c9750c5671c4c8fddb48626e0a141,zobrist hashing,,0.2293,5.459
