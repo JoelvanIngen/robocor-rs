@@ -217,6 +217,7 @@ pub const fn slow_bishop_attacks(square_idx: usize, occ: u64) -> u64 {
     attacks
 }
 
+#[inline(always)]
 pub fn get_attacks_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
     let sq = pos.idx();
     let occ = (friendly | enemy).to_u64() & BISHOP_MASKS[sq];
@@ -224,6 +225,7 @@ pub fn get_attacks_bishop(pos: Square, friendly: BitBoard, enemy: BitBoard) -> B
     BISHOP_ATTACKS[sq][idx]
 }
 
+#[inline(always)]
 pub fn get_pl_moves_bishop(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
     let attacks = get_attacks_bishop(pos, friendly, enemy);
     for to in (attacks & enemy).iter() {

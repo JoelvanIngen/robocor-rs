@@ -46,6 +46,7 @@ const fn pre_compute_knight_moves() -> [BitBoard; 64] {
     bitboards
 }
 
+#[inline(always)]
 pub fn get_attacks_knight(pos: Square, friendly: BitBoard) -> BitBoard {
     // `& !friendly` might not matter as the presence of a friendly piece
     // means no enemy piece is present

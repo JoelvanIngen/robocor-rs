@@ -77,6 +77,7 @@ pub const KING_ATTACKS: [BitBoard; 64] = {
     attacks
 };
 
+#[inline(always)]
 pub fn get_attacks_king(pos: Square, friendly: BitBoard) -> BitBoard {
     // `& !friendly` might not matter as the presence of a friendly piece
     // means no enemy piece is present

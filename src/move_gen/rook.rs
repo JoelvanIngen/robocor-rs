@@ -201,6 +201,7 @@ pub const fn slow_rook_attacks(square_idx: usize, occ: u64) -> u64 {
     attacks
 }
 
+#[inline(always)]
 pub fn get_attacks_rook(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
     let sq = pos.idx();
     let occ = (friendly | enemy).to_u64() & ROOK_MASKS[sq];
@@ -208,6 +209,7 @@ pub fn get_attacks_rook(pos: Square, friendly: BitBoard, enemy: BitBoard) -> Bit
     ROOK_ATTACKS[sq][idx]
 }
 
+#[inline(always)]
 pub fn get_pl_moves_rook(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
     let attacks = get_attacks_rook(pos, friendly, enemy);
     for to in (attacks & enemy).iter() {
