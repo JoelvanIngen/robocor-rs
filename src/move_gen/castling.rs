@@ -1,22 +1,20 @@
-use crate::board::BitBoard;
-
 /// Mask to cheaply remove castling rights when any piece moves to or from king/rook squares
-pub const CASTLING_MASK: [BitBoard; 64] = {
-    let mut masks = [BitBoard::from_u64(u64::MAX); 64];
+pub const CASTLING_MASK: [u8; 64] = {
+    let mut masks = [15u8; 64];
 
     // White queenside
-    masks[0] = BitBoard::from_u64(!(1u64 << 0));
+    masks[0] = 15 - (1 << 3);
     // White both sides
-    masks[4] = BitBoard::from_u64(!((1u64 << 0) | (1u64 << 7)));
+    masks[4] = 15 - (1 << 3) - (1 << 2);
     // White kingside
-    masks[7] = BitBoard::from_u64(!(1u64 << 7));
+    masks[7] = 15 - (1 << 2);
 
     // Black queenside
-    masks[56] = BitBoard::from_u64(!(1u64 << 56));
+    masks[56] = 15 - (1 << 1);
     // Black both sides
-    masks[60] = BitBoard::from_u64(!((1u64 << 56) | (1u64 << 63)));
+    masks[60] = 15 - (1 << 1) - 1;
     // Black kingside
-    masks[63] = BitBoard::from_u64(!(1u64 << 63));
+    masks[63] = 15 - 1;
 
     masks
 };

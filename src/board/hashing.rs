@@ -1,11 +1,11 @@
 use crate::board::{BitBoard, Board};
 use crate::chess::piece::PieceColour::Black;
-use crate::chess::zobrist::{ZOBRIST, castling_index};
+use crate::chess::zobrist::ZOBRIST;
 
 impl Board {
     #[inline(always)]
     pub(super) fn update_hash(&mut self) {
-        self.hash ^= ZOBRIST.castling_rights[castling_index(self.castling_rights)];
+        self.hash ^= ZOBRIST.castling_rights[self.castling_rights as usize];
         if self.en_passant != BitBoard::EMPTY {
             self.hash ^= ZOBRIST.en_passant[self.en_passant.get_square().col()];
         }

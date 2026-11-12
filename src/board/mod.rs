@@ -15,7 +15,8 @@ pub struct Board {
     // 2D array bitboard[colour][piece]
     bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
     turn: PieceColour,
-    castling_rights: BitBoard,
+    // Bit 1-4 unused, 5 WQ, 6 WK, 7 BQ, 8 BK
+    castling_rights: u8,
     en_passant: BitBoard,
     halfmove_clock: u8, // Max value 50
     fullmove_number: u16,

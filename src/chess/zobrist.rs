@@ -70,7 +70,7 @@ pub const ZOBRIST: ZobristKeys = {
 pub fn calculate_hash(
     bitboards: [[BitBoard; PieceKind::COUNT]; PieceColour::COUNT],
     turn: PieceColour,
-    castling_rights: BitBoard,
+    castling_rights: u8,
     en_passant: BitBoard,
 ) -> u64 {
     let mut hash = 0u64;
@@ -87,7 +87,7 @@ pub fn calculate_hash(
         hash ^= ZOBRIST.side_to_move;
     }
 
-    hash ^= ZOBRIST.castling_rights[castling_index(castling_rights)];
+    hash ^= ZOBRIST.castling_rights[castling_rights as usize];
 
     if en_passant != BitBoard::EMPTY {
         let sq = en_passant.get_square();

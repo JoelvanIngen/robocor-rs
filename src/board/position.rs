@@ -206,20 +206,20 @@ impl Board {
             White => {
                 let queenside = Square::from_coords(0, 0);
                 let kingside = Square::from_coords(0, 7);
-                if self.castling_rights.is_set(queenside) {
+                if self.castling_rights & (1 << 3) == (1 << 3) {
                     options.push(queenside);
                 }
-                if self.castling_rights.is_set(kingside) {
+                if self.castling_rights & (1 << 2) == (1 << 2) {
                     options.push(kingside);
                 }
             }
             Black => {
                 let queenside = Square::from_coords(7, 0);
                 let kingside = Square::from_coords(7, 7);
-                if self.castling_rights.is_set(queenside) {
+                if self.castling_rights & (1 << 1) == (1 << 1) {
                     options.push(queenside);
                 }
-                if self.castling_rights.is_set(kingside) {
+                if self.castling_rights & 1 == 1 {
                     options.push(kingside);
                 }
             }

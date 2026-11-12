@@ -57,13 +57,13 @@ impl Board {
 
         // Castling rights
         let castling_rights_fen = fen_parts.next().ok_or(MissingField(fen.to_string()))?;
-        let mut castling_rights = BitBoard::EMPTY;
+        let mut castling_rights = 0u8;
         for castle in castling_rights_fen.chars() {
             match castle {
-                'Q' => castling_rights.set(Square::from_coords(0, 0)),
-                'K' => castling_rights.set(Square::from_coords(0, 7)),
-                'q' => castling_rights.set(Square::from_coords(7, 0)),
-                'k' => castling_rights.set(Square::from_coords(7, 7)),
+                'Q' => castling_rights += 1 << 3,
+                'K' => castling_rights += 1 << 2,
+                'q' => castling_rights += 1 << 1,
+                'k' => castling_rights += 1,
                 '-' => {}
                 c => return Err(InvalidCastlingRights(c)),
             }
