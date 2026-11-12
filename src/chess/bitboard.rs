@@ -17,6 +17,11 @@ impl BitBoard {
     }
 
     #[inline(always)]
+    pub const fn to_u64(self) -> u64 {
+        self.0
+    }
+
+    #[inline(always)]
     pub fn count(&self) -> u32 {
         self.0.count_ones()
     }

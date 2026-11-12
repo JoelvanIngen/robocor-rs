@@ -6,6 +6,7 @@ mod knight;
 mod pawn;
 mod queen;
 mod rook;
+mod magic;
 
 pub use bishop::{get_attacks_bishop, get_pl_moves_bishop};
 pub use castling::CASTLING_MASK;

@@ -1,6 +1,7 @@
 use crate::board::{BitBoard, Square};
-use crate::chess::moves::MoveList;
-use crate::move_gen::common::{get_attacks_sliding, get_pl_moves_sliding};
+use crate::chess::moves::MoveKind::{Capture, QuietMove};
+use crate::chess::moves::{Move, MoveList};
+use crate::move_gen::magic::{ROOK_ATTACKS, ROOK_MAGICS, ROOK_MASKS, SHIFT};
 
 const DIRECTIONS: [(i8, i8); 4] = [
     // (row delta, col delta)
@@ -10,12 +11,73 @@ const DIRECTIONS: [(i8, i8); 4] = [
     (1, 0),
 ];
 
+pub const fn slow_rook_attacks(square_idx: usize, occ: u64) -> u64 {
+    let row = square_idx / 8;
+    let col = square_idx % 8;
+    let mut attacks = 0u64;
+
+    // Up
+    let mut new_row = row + 1;
+    while new_row < 8 {
+        let bit = 1u64 << (new_row * 8 + col);
+        attacks |= bit;
+        if occ & bit != 0 {
+            break;
+        }
+        new_row += 1;
+    }
+
+    // Down
+    let mut new_row = row as i32 - 1;
+    while new_row >= 0 {
+        let bit = 1u64 << (new_row as usize * 8 + col);
+        attacks |= bit;
+        if occ & bit != 0 {
+            break;
+        }
+        new_row -= 1;
+    }
+
+    // Right
+    let mut new_col = col + 1;
+    while new_col < 8 {
+        let bit = 1u64 << (row * 8 + new_col);
+        attacks |= bit;
+        if occ & bit != 0 {
+            break;
+        }
+        new_col += 1;
+    }
+
+    // Left
+    let mut new_col = col as i32 - 1;
+    while new_col >= 0 {
+        let bit = 1u64 << (row * 8 + new_col as usize);
+        attacks |= bit;
+        if occ & bit != 0 {
+            break;
+        }
+        new_col -= 1;
+    }
+
+    attacks
+}
+
 pub fn get_attacks_rook(pos: Square, friendly: BitBoard, enemy: BitBoard) -> BitBoard {
-    get_attacks_sliding(pos, friendly | enemy, &DIRECTIONS)
+    let sq = pos.idx();
+    let occ = (friendly | enemy).to_u64() & ROOK_MASKS[sq];
+    let idx = ((occ.wrapping_mul(ROOK_MAGICS[sq])) >> SHIFT) as usize;
+    ROOK_ATTACKS[sq][idx]
 }
 
 pub fn get_pl_moves_rook(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
-    get_pl_moves_sliding(moves, pos, friendly, enemy, &DIRECTIONS)
+    let attacks = get_attacks_rook(pos, friendly, enemy);
+    for to in (attacks & enemy).iter() {
+        moves.push(Move::new(Capture, pos, to));
+    }
+    for to in (attacks & !friendly & !enemy).iter() {
+        moves.push(Move::new(QuietMove, pos, to));
+    }
 }
 
 #[cfg(test)]
