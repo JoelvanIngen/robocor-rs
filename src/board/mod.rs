@@ -4,6 +4,7 @@ mod fen;
 mod hashing;
 mod move_generation;
 mod position;
+mod legal;
 
 pub use crate::chess::bitboard::BitBoard;
 use crate::chess::piece::{PieceColour, PieceKind};
