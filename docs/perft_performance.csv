@@ -24,3 +24,4 @@ date,number,commit,comment,perft 4,perft 5,perft 6,perft 7
 2026-11-12,4,3c3a9018628885dcb701c81864185582bc4d8932,bishop magic bitboards,,0.1258,3.053,
 2026-11-12,5,9487cdad13fe35687749df93324e767f67800f97,attack generation inlining,,0.1202,2.955,
 2026-11-14,1,c52197fac41f54dc1e5dd782b556ba6803b36201,in-place legality check,,,1.402,34.834
+2026-11-15,1,a84e4c4c4f34738baa48ed7460d85c2fc836c2e7,pre-compute pin rays,,,1.433,34.417
