@@ -2,9 +2,9 @@ mod attacks;
 mod display;
 mod fen;
 mod hashing;
+mod legal;
 mod move_generation;
 mod position;
-mod legal;
 
 pub use crate::chess::bitboard::BitBoard;
 use crate::chess::piece::{PieceColour, PieceKind};
