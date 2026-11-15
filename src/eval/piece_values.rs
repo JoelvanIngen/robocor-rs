@@ -52,7 +52,7 @@ mod tests {
             Board::from_fen("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            9,
+            900,
             "queen difference should be 9.0 in favour of white"
         );
     }
@@ -63,7 +63,7 @@ mod tests {
             Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RN1QKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            -3,
+            -300,
             "bishop difference should be 3.0 in favour of black"
         )
     }
@@ -74,7 +74,7 @@ mod tests {
             Board::from_fen("rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            3,
+            300,
             "knight difference should be 3.0 in favour of white"
         )
     }
@@ -85,7 +85,7 @@ mod tests {
             Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            -5,
+            -500,
             "rook difference should be 5.0 in favour of black"
         );
     }
