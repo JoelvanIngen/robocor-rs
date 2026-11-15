@@ -71,4 +71,8 @@ impl Board {
 
         false
     }
+
+    pub fn is_in_check(&self) -> bool {
+        self.is_bb_attacked(self.turn, self.get_bitboard(Piece::new(King, self.turn)))
+    }
 }

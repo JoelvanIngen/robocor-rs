@@ -1,5 +1,5 @@
-use crate::board::position::GameState::{Draw, Ongoing, Won};
 use crate::board::Board;
+use crate::board::position::GameState::{Draw, Ongoing, Won};
 use crate::chess::bitboard::BitBoard;
 use crate::chess::moves::Move;
 use crate::chess::moves::MoveKind::{
@@ -236,6 +236,10 @@ impl Board {
             }
         }
         pieces
+    }
+
+    pub fn turn(&self) -> PieceColour {
+        self.turn
     }
 }
 
