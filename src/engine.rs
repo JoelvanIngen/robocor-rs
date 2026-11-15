@@ -1,11 +1,12 @@
 use crate::board::Board;
+use crate::chess::moves::Move;
 use crate::error::FenError;
+use crate::search::search_infinite;
 use crate::uci::Command::{Go, Position};
 use crate::uci::GoOptions::Infinite;
 use crate::uci::PositionOptions::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
 use std::process::exit;
-use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 
 pub struct Engine {
@@ -40,10 +41,7 @@ impl Engine {
 
     fn handle_go(&mut self, opts: GoOptions) {
         match opts {
-            Infinite => self
-                .uci_tx
-                .send(String::from_str("Simulated engine start").unwrap())
-                .expect("failed to send message from engine to uci"),
+            Infinite => self.handle_go_infinite(),
         }
     }
 
@@ -63,5 +61,30 @@ impl Engine {
             .send(format!("invalid fen {fen}: {:?}", e))
             .expect("failed send fen error message from engine to uci");
         exit(1);
+    }
+
+    fn handle_go_infinite(&mut self) {
+        let board = match self.board {
+            Some(ref board) => board,
+            None => {
+                self.uci_tx
+                    .send(String::from("sent `go infinite`, but no board was set up"))
+                    .expect("failed to send message from engine to uci");
+                return;
+            }
+        };
+
+        let best_move = search_infinite(board, |depth: u8, cp: i32, nodes: u64, pv: Move| {
+            self.uci_tx
+                .send(format!(
+                    "info depth {depth} score cp {cp} nodes {nodes} pv {}",
+                    pv.to_uci()
+                ))
+                .expect("failed to send analysis info from engine to uci")
+        });
+        let move_str = best_move.map_or_else(|| String::from("a1a1"), |m| m.to_uci());
+        self.uci_tx
+            .send(format!("bestmove {move_str}"))
+            .expect("failed to send bestmove from engine to uci");
     }
 }

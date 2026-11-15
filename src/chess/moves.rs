@@ -88,6 +88,10 @@ impl Move {
     pub fn is_promotion(&self) -> bool {
         self.repr >> 12 & 0b1000 != 0
     }
+
+    pub fn to_uci(&self) -> String {
+        String::from(format!("{}{}", self.from(), self.to()))
+    }
 }
 
 impl Debug for Move {
