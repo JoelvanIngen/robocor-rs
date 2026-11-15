@@ -113,7 +113,7 @@ pub fn search_infinite(
         for m in &moves {
             let mut next_board = *board;
             next_board.apply_move(*m);
-            let score = -negamax(&next_board, &mut ctx, depth - 1, -beta, -alpha, depth + 1);
+            let score = -negamax(&next_board, &mut ctx, depth - 1, -beta, -alpha, 1);
 
             if ctx.aborted {
                 break;
