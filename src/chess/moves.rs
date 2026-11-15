@@ -57,6 +57,9 @@ pub struct Move {
 }
 
 impl Move {
+    // Sentinel move, quiet a1a1
+    pub const NULL: Self = Self { repr: 0 };
+
     #[inline(always)]
     pub fn new(kind: MoveKind, from: Square, to: Square) -> Self {
         Self {

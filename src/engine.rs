@@ -74,11 +74,11 @@ impl Engine {
             }
         };
 
-        let best_move = search_infinite(board, |depth: u8, cp: i32, nodes: u64, pv: Move| {
+        let best_move = search_infinite(board, |depth: u8, cp: i32, nodes: u64, pv: &[Move]| {
+            let pv_str = pv.iter().map(Move::to_uci).collect::<Vec<_>>().join(" ");
             self.uci_tx
                 .send(format!(
-                    "info depth {depth} score cp {cp} nodes {nodes} pv {}",
-                    pv.to_uci()
+                    "info depth {depth} score cp {cp} nodes {nodes} pv {pv_str}"
                 ))
                 .expect("failed to send analysis info from engine to uci")
         });
