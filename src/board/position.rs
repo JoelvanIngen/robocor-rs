@@ -1,5 +1,5 @@
 use crate::board::position::GameState::{Draw, Ongoing, Won};
-use crate::board::{Board, combine_bitboards};
+use crate::board::Board;
 use crate::chess::bitboard::BitBoard;
 use crate::chess::moves::Move;
 use crate::chess::moves::MoveKind::{
@@ -161,9 +161,7 @@ impl Board {
         if self.halfmove_clock > 100 {
             return Draw;
         }
-        if (combine_bitboards(self.bitboards[0]) | combine_bitboards(self.bitboards[1])).count()
-            == 2
-        {
+        if (self.colour_bitboards[0] | self.colour_bitboards[1]).count() == 2 {
             // Only kings remain
             return Draw;
         }
