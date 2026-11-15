@@ -142,9 +142,10 @@ impl Board {
         }
 
         // Update clocks
-        self.halfmove_clock = match m.is_irreversable() {
-            true => 0,
-            false => self.halfmove_clock + 1,
+        self.halfmove_clock = if moving_piece.kind == Pawn || m.is_capture() {
+            0
+        } else {
+            self.halfmove_clock + 1
         };
         if self.turn == Black {
             self.fullmove_number += 1;

@@ -85,12 +85,6 @@ impl Move {
     }
 
     #[inline(always)]
-    pub fn is_irreversable(&self) -> bool {
-        // Only a quiet move is reversible
-        self.repr >> 12 != 0b0000
-    }
-
-    #[inline(always)]
     pub fn is_promotion(&self) -> bool {
         self.repr >> 12 & 0b1000 != 0
     }
