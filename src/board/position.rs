@@ -161,7 +161,7 @@ impl Board {
         if self.halfmove_clock > 100 {
             return Draw;
         }
-        if (combine_bitboards(self.bitboards[0]) & combine_bitboards(self.bitboards[1])).count()
+        if (combine_bitboards(self.bitboards[0]) | combine_bitboards(self.bitboards[1])).count()
             == 2
         {
             // Only kings remain
