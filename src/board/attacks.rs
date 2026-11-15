@@ -12,8 +12,6 @@ impl Board {
     /// target_bb: bitboard of squares to check
     /// TODO: Refactor such that this function receives a single square
     ///       as some unnecessary circular conversion is happening right now
-    /// TODO: Skip piece check if that opponent's piece is no longer present on the board
-    /// TODO: We might be able to check queen during rooks/bishops to save on double computation
     pub(super) fn is_bb_attacked(&self, colour: PieceColour, target_bb: BitBoard) -> bool {
         let enemy_colour = colour.other();
 
