@@ -47,28 +47,21 @@ const fn pre_compute_knight_moves() -> [BitBoard; 64] {
 }
 
 #[inline(always)]
-pub fn get_attacks_knight(pos: Square, friendly: BitBoard) -> BitBoard {
-    // `& !friendly` might not matter as the presence of a friendly piece
-    // means no enemy piece is present
-    // I'll keep it for the time being but removing might save two operations
-    KNIGHT_MOVES[pos.idx()] & !friendly
+pub fn get_attacks_knight(pos: Square) -> BitBoard {
+    KNIGHT_MOVES[pos.idx()]
 }
 
+#[inline(always)]
 pub fn get_pl_moves_knight(moves: &mut MoveList, pos: Square, friendly: BitBoard, enemy: BitBoard) {
-    // Find potential from_coords knight squares
-    let new_positions_bb = KNIGHT_MOVES[pos.idx()];
+    let targets = get_attacks_knight(pos) & !friendly;
+    let captures = targets & enemy;
+    let quiets = targets & !enemy;
 
-    for new_pos in new_positions_bb.iter() {
-        if friendly.is_set(new_pos) {
-            continue;
-        }
-
-        let move_type = match enemy.is_set(new_pos) {
-            true => Capture,
-            false => QuietMove,
-        };
-
-        moves.push(Move::new(move_type, pos, new_pos));
+    for to in captures.iter() {
+        moves.push(Move::new(Capture, pos, to));
+    }
+    for to in quiets.iter() {
+        moves.push(Move::new(QuietMove, pos, to));
     }
 }
 

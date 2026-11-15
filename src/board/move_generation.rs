@@ -1,3 +1,4 @@
+use crate::board::legal::CheckContext;
 use crate::board::{Board, get_pl_moves_knight};
 use crate::chess::moves::MoveList;
 use crate::chess::piece::PieceColour;
@@ -10,7 +11,7 @@ use crate::move_gen::{
 
 impl Board {
     /// Generate all pseudo-legal moves for a given colour
-    pub fn generate_pl_moves(&self, colour: PieceColour) -> MoveList {
+    pub fn generate_pl_moves(&self, ctx: &CheckContext, colour: PieceColour) -> MoveList {
         let mut moves = MoveList::new();
 
         let piece_bitboard = self.bitboards[colour as usize];
@@ -25,41 +26,42 @@ impl Board {
             ),
         };
 
-        for pos in piece_bitboard[Bishop as usize].iter() {
-            get_pl_moves_bishop(&mut moves, pos, friendly, enemy)
-        }
+        get_pl_moves_king(
+            &mut moves,
+            piece_bitboard[King as usize].get_square(),
+            friendly,
+            enemy,
+            self.get_castling_rights(colour),
+        );
 
-        for pos in piece_bitboard[King as usize].iter() {
-            get_pl_moves_king(
-                &mut moves,
-                pos,
-                friendly,
-                enemy,
-                self.get_castling_rights(colour),
-            )
-        }
+        // If 2 pieces give check simultaneously, king move is forced so no point computing other pieces
+        if ctx.checkers.count() < 2 {
+            for pos in piece_bitboard[Bishop as usize].iter() {
+                get_pl_moves_bishop(&mut moves, pos, friendly, enemy)
+            }
 
-        for pos in piece_bitboard[Knight as usize].iter() {
-            get_pl_moves_knight(&mut moves, pos, friendly, enemy)
-        }
+            for pos in piece_bitboard[Knight as usize].iter() {
+                get_pl_moves_knight(&mut moves, pos, friendly, enemy)
+            }
 
-        for pos in piece_bitboard[Pawn as usize].iter() {
-            get_pl_moves_pawn(
-                &mut moves,
-                pos,
-                friendly,
-                enemy,
-                colour,
-                self.en_passant_square(),
-            )
-        }
+            for pos in piece_bitboard[Pawn as usize].iter() {
+                get_pl_moves_pawn(
+                    &mut moves,
+                    pos,
+                    friendly,
+                    enemy,
+                    colour,
+                    self.en_passant_square(),
+                )
+            }
 
-        for pos in piece_bitboard[Queen as usize].iter() {
-            get_pl_moves_queen(&mut moves, pos, friendly, enemy)
-        }
+            for pos in piece_bitboard[Queen as usize].iter() {
+                get_pl_moves_queen(&mut moves, pos, friendly, enemy)
+            }
 
-        for pos in piece_bitboard[Rook as usize].iter() {
-            get_pl_moves_rook(&mut moves, pos, friendly, enemy)
+            for pos in piece_bitboard[Rook as usize].iter() {
+                get_pl_moves_rook(&mut moves, pos, friendly, enemy)
+            }
         }
 
         moves
@@ -79,7 +81,7 @@ impl Board {
         let ctx = self.check_context(colour);
         let mut moves = MoveList::new();
 
-        for pl_move in self.generate_pl_moves(colour) {
+        for pl_move in self.generate_pl_moves(&ctx, colour) {
             if self.is_legal(pl_move, colour, &ctx) {
                 moves.push(pl_move);
             }

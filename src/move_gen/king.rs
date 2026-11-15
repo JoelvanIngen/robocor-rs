@@ -78,13 +78,11 @@ pub const KING_ATTACKS: [BitBoard; 64] = {
 };
 
 #[inline(always)]
-pub fn get_attacks_king(pos: Square, friendly: BitBoard) -> BitBoard {
-    // `& !friendly` might not matter as the presence of a friendly piece
-    // means no enemy piece is present
-    // I'll keep it for the time being but removing might save two operations
-    KING_ATTACKS[pos.idx()] & !friendly
+pub fn get_attacks_king(pos: Square) -> BitBoard {
+    KING_ATTACKS[pos.idx()]
 }
 
+#[inline(always)]
 pub fn get_pl_moves_king(
     moves: &mut MoveList,
     pos: Square,
@@ -92,7 +90,7 @@ pub fn get_pl_moves_king(
     enemy: BitBoard,
     castling_options: ArrayVec<Square, 2>,
 ) {
-    let targets = get_attacks_king(pos, friendly);
+    let targets = get_attacks_king(pos) & !friendly;
     let captures = targets & enemy;
     let quiets = targets & !enemy;
 

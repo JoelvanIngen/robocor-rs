@@ -40,7 +40,6 @@ impl Board {
         if get_attacks_king(
             self.get_bitboard(Piece::new(King, enemy_colour))
                 .get_square(),
-            BitBoard::EMPTY,
         ) & target_bb
             != BitBoard::EMPTY
         {
@@ -62,9 +61,7 @@ impl Board {
                 return true;
             }
             // TODO: The friendly bitboard is irrelevant here, should refactor so we can omit it
-            if has_enemy_knights
-                && (get_attacks_knight(sq, BitBoard::EMPTY) & enemy_knights != BitBoard::EMPTY)
-            {
+            if has_enemy_knights && (get_attacks_knight(sq) & enemy_knights != BitBoard::EMPTY) {
                 return true;
             }
             if has_enemy_pawns && is_square_attacked(sq, enemy_pawns, colour) {

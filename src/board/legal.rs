@@ -127,8 +127,8 @@ impl Board {
         // Checkers
         let mut checkers = BitBoard::EMPTY;
         checkers |= get_attacks_pawn(king_sq, colour) & enemy_pawns;
-        checkers |= get_attacks_knight(king_sq, BitBoard::EMPTY) & enemy_knights;
-        checkers |= get_attacks_king(king_sq, BitBoard::EMPTY) & enemy_king; // Might be useless cos king can't give check anyway?
+        checkers |= get_attacks_knight(king_sq) & enemy_knights;
+        checkers |= get_attacks_king(king_sq) & enemy_king; // Might be useless cos king can't give check anyway?
 
         let rook_from_king = get_attacks_rook(king_sq, friendly_bb, enemy_bb);
         let bishop_from_king = get_attacks_bishop(king_sq, friendly_bb, enemy_bb);
@@ -255,14 +255,12 @@ impl Board {
         {
             return false;
         }
-        if (get_attacks_knight(to, BitBoard::EMPTY) & self.get_bitboard(Piece::new(Knight, enemy)))
+        if (get_attacks_knight(to) & self.get_bitboard(Piece::new(Knight, enemy)))
             != BitBoard::EMPTY
         {
             return false;
         }
-        if (get_attacks_king(to, BitBoard::EMPTY) & self.get_bitboard(Piece::new(King, enemy)))
-            != BitBoard::EMPTY
-        {
+        if (get_attacks_king(to) & self.get_bitboard(Piece::new(King, enemy))) != BitBoard::EMPTY {
             return false;
         }
 
@@ -306,13 +304,12 @@ impl Board {
         if (get_attacks_pawn(king_sq, colour) & enemy_pawns_after) != BitBoard::EMPTY {
             return false;
         }
-        if (get_attacks_knight(king_sq, BitBoard::EMPTY)
-            & self.get_bitboard(Piece::new(Knight, enemy)))
+        if (get_attacks_knight(king_sq) & self.get_bitboard(Piece::new(Knight, enemy)))
             != BitBoard::EMPTY
         {
             return false;
         }
-        if (get_attacks_king(king_sq, BitBoard::EMPTY) & self.get_bitboard(Piece::new(King, enemy)))
+        if (get_attacks_king(king_sq) & self.get_bitboard(Piece::new(King, enemy)))
             != BitBoard::EMPTY
         {
             return false;
