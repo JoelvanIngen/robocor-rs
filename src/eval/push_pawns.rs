@@ -17,7 +17,7 @@ pub fn push_pawns(board: &Board) -> i32 {
         eval += sq.row() as i32 * ROW_WORTH;
     }
     for sq in black_pawns.iter() {
-        eval -= sq.row() as i32 * ROW_WORTH;
+        eval -= (7 - (sq.row() as i32)) * ROW_WORTH;
     }
 
     eval
