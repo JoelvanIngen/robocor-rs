@@ -19,7 +19,7 @@ pub struct Board {
     // Bit 1-4 unused, 5 WQ, 6 WK, 7 BQ, 8 BK
     castling_rights: u8,
     en_passant: BitBoard,
-    halfmove_clock: u8, // Max value 50
+    halfmove_clock: u8, // Max value 100
     fullmove_number: u16,
 
     colour_bitboards: [BitBoard; 2],

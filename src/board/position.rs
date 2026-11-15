@@ -158,7 +158,7 @@ impl Board {
     }
 
     pub fn game_state(&self) -> GameState {
-        if self.halfmove_clock > 50 {
+        if self.halfmove_clock > 100 {
             return Draw;
         }
         if (combine_bitboards(self.bitboards[0]) & combine_bitboards(self.bitboards[1])).count()
