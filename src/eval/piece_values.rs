@@ -1,5 +1,7 @@
 use crate::board::Board;
-use crate::chess::piece::{PieceColour, PieceKind};
+use crate::chess::piece::PieceColour::{Black, White};
+use crate::chess::piece::PieceKind::{Bishop, Knight, Pawn, Queen, Rook};
+use crate::chess::piece::Piece;
 
 const QUEEN_VAL: i32 = 900;
 const ROOK_VAL: i32 = 500;
@@ -13,21 +15,16 @@ const PAWN_VAL: i32 = 100;
 pub fn piece_values(board: &Board) -> i32 {
     let mut eval = 0;
 
-    for piece in board.get_pieces() {
-        let value = match piece.kind {
-            PieceKind::Pawn => PAWN_VAL,
-            PieceKind::Knight => KNIGHT_VAL,
-            PieceKind::Bishop => BISHOP_VAL,
-            PieceKind::Rook => ROOK_VAL,
-            PieceKind::Queen => QUEEN_VAL,
-            _ => continue,
-        };
-
-        eval += match piece.colour {
-            PieceColour::White => value,
-            PieceColour::Black => -value,
-        }
-    }
+    eval += board.get_bitboard(Piece::new(Queen, White)).count() as i32 * QUEEN_VAL;
+    eval -= board.get_bitboard(Piece::new(Queen, Black)).count() as i32 * QUEEN_VAL;
+    eval += board.get_bitboard(Piece::new(Rook, White)).count() as i32 * ROOK_VAL;
+    eval -= board.get_bitboard(Piece::new(Rook, Black)).count() as i32 * ROOK_VAL;
+    eval += board.get_bitboard(Piece::new(Bishop, White)).count() as i32 * BISHOP_VAL;
+    eval -= board.get_bitboard(Piece::new(Bishop, Black)).count() as i32 * BISHOP_VAL;
+    eval += board.get_bitboard(Piece::new(Knight, White)).count() as i32 * KNIGHT_VAL;
+    eval -= board.get_bitboard(Piece::new(Knight, Black)).count() as i32 * KNIGHT_VAL;
+    eval += board.get_bitboard(Piece::new(Pawn, White)).count() as i32 * PAWN_VAL;
+    eval -= board.get_bitboard(Piece::new(Pawn, Black)).count() as i32 * PAWN_VAL;
 
     eval
 }
