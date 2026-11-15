@@ -1,17 +1,17 @@
 use crate::board::Board;
 use crate::chess::piece::{PieceColour, PieceKind};
 
-const QUEEN_VAL: f32 = 9.;
-const ROOK_VAL: f32 = 5.;
-const BISHOP_VAL: f32 = 3.;
-const KNIGHT_VAL: f32 = 3.;
-const PAWN_VAL: f32 = 1.;
+const QUEEN_VAL: i32 = 900;
+const ROOK_VAL: i32 = 500;
+const BISHOP_VAL: i32 = 300;
+const KNIGHT_VAL: i32 = 300;
+const PAWN_VAL: i32 = 100;
 
 /// Counts values of all pieces on the board and returns
 /// difference in favour of white
 /// Naive implementation; needs optimisation later
-pub fn piece_values(board: &Board) -> f32 {
-    let mut eval = 0f32;
+pub fn piece_values(board: &Board) -> i32 {
+    let mut eval = 0;
 
     for piece in board.get_pieces() {
         let value = match piece.kind {
@@ -41,7 +41,7 @@ mod tests {
         let board = Board::start_position();
         assert_eq!(
             piece_values(&board),
-            0.0,
+            0,
             "piece value difference of start position should be zero"
         );
     }
@@ -52,7 +52,7 @@ mod tests {
             Board::from_fen("rnb1kbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            9.0,
+            9,
             "queen difference should be 9.0 in favour of white"
         );
     }
@@ -63,7 +63,7 @@ mod tests {
             Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RN1QKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            -3.0,
+            -3,
             "bishop difference should be 3.0 in favour of black"
         )
     }
@@ -74,7 +74,7 @@ mod tests {
             Board::from_fen("rnbqkb1r/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            3.0,
+            3,
             "knight difference should be 3.0 in favour of white"
         )
     }
@@ -85,7 +85,7 @@ mod tests {
             Board::from_fen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBN1 w Qkq - 0 1").unwrap();
         assert_eq!(
             piece_values(&board),
-            -5.0,
+            -5,
             "rook difference should be 5.0 in favour of black"
         );
     }
