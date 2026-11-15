@@ -19,6 +19,77 @@ const DIRECTIONS: [(i8, i8); 8] = [
 ];
 const IS_DIAGONAL: [bool; 8] = [true, false, true, false, false, true, false, true];
 
+static BETWEEN: [[BitBoard; 64]; 64] = {
+    let mut between = [[BitBoard::EMPTY; 64]; 64];
+
+    let mut a = 0;
+    while a < 64 {
+        let mut b = 0;
+        while b < 64 {
+            between[a][b] = slow_squares_between(Square::from_index(a), Square::from_index(b));
+            b += 1;
+        }
+        a += 1;
+    }
+
+    between
+};
+
+static RAY_INCLUSIVE: [[BitBoard; 64]; 64] = {
+    let mut rays = [[BitBoard::EMPTY; 64]; 64];
+
+    let mut a = 0;
+    while a < 64 {
+        let mut b = 0;
+        while b < 64 {
+            rays[a][b] = slow_ray_between_inclusive(Square::from_index(a), Square::from_index(b));
+            b += 1;
+        }
+        a += 1;
+    }
+    rays
+};
+
+const fn is_aligned(a: Square, b: Square) -> bool {
+    let (ar, ac) = (a.row() as i32, a.col() as i32);
+    let (br, bc) = (b.row() as i32, b.col() as i32);
+    let (rd, cd) = ((br - ar).abs(), (bc - ac).abs());
+
+    // Not the same square, and either horizontal, vertical, or diagonal
+    !(rd == 0 && cd == 0) && (rd == 0 || cd == 0 || rd == cd)
+}
+
+/// Squares between square a and square b, exclusive on both ends
+/// Empty if not aligned
+const fn slow_squares_between(a: Square, b: Square) -> BitBoard {
+    if !is_aligned(a, b) {
+        return BitBoard::EMPTY;
+    }
+
+    let (ar, ac) = (a.row() as i32, a.col() as i32);
+    let (br, bc) = (b.row() as i32, b.col() as i32);
+    let (dr, dc) = ((br - ar).signum(), (bc - ac).signum());
+
+    let mut bb = BitBoard::EMPTY;
+    let (mut r, mut c) = (ar + dr, ac + dc);
+    while r != br || c != bc {
+        bb.set(Square::from_coords(r as usize, c as usize));
+        r += dr;
+        c += dc;
+    }
+    bb
+}
+
+/// Squares between king (exclusive) and pinner (inclusive)
+const fn slow_ray_between_inclusive(king: Square, pinner: Square) -> BitBoard {
+    let mut bb = slow_squares_between(king, pinner);
+    // Raw value since direct comparison to BitBoard::EMPTY doesn't work with const?
+    if bb.to_u64() != 0 {
+        bb.set(pinner);
+    }
+    bb
+}
+
 pub struct CheckContext {
     // Enemy pieces giving a check on the king
     pub checkers: BitBoard,
@@ -66,7 +137,7 @@ impl Board {
         // Check mask
         let check_mask = if checkers.count() == 1 {
             let checker_sq = checkers.get_square();
-            squares_between(king_sq, checker_sq) | checkers
+            BETWEEN[king_sq.idx()][checker_sq.idx()] | checkers
         } else {
             BitBoard::EMPTY
         };
@@ -104,7 +175,7 @@ impl Board {
                         if is_pinner {
                             pinned.set(pin_candidate);
                             pin_rays[pin_candidate.idx()] =
-                                ray_between_inclusive(king_sq, square, dr, dc);
+                                RAY_INCLUSIVE[king_sq.idx()][square.idx()];
                         }
                     }
 
@@ -272,46 +343,4 @@ impl Board {
 
         true
     }
-}
-
-/// Squares between square a and square b, exclusive on both ends
-/// Empty is not aligned
-fn squares_between(a: Square, b: Square) -> BitBoard {
-    let (ar, ac) = (a.row() as i32, a.col() as i32);
-    let (br, bc) = (b.row() as i32, b.col() as i32);
-    let (dr, dc) = ((br - ar).signum(), (bc - ac).signum());
-    let (rd, cd) = ((br - ar).abs(), (bc - ac).abs());
-
-    debug_assert!(
-        !(rd == 0 && cd == 0),
-        "Squares between fired on two equal squares"
-    );
-
-    if !(rd == 0 || cd == 0 || rd == cd) {
-        // Neither orthogonal nor vertical
-        return BitBoard::EMPTY;
-    }
-
-    let mut bb = BitBoard::EMPTY;
-    let (mut r, mut c) = (ar + dr, ac + dc);
-    while (r, c) != (br, bc) {
-        bb.set(Square::from_coords(r as usize, c as usize));
-        r += dr;
-        c += dc;
-    }
-    bb
-}
-
-/// Squares between king (exclusive) and pinner (inclusive)
-fn ray_between_inclusive(king: Square, pinner: Square, dr: i8, dc: i8) -> BitBoard {
-    let mut bb = BitBoard::EMPTY;
-    let mut r = king.row() as i8 + dr;
-    let mut c = king.col() as i8 + dc;
-    while (r as usize, c as usize) != (pinner.row(), pinner.col()) {
-        bb.set(Square::from_coords(r as usize, c as usize));
-        r += dr;
-        c += dc;
-    }
-    bb.set(pinner);
-    bb
 }
