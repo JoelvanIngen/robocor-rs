@@ -1,8 +1,10 @@
+mod double_pawns;
 mod mobility;
 mod piece_values;
 mod push_pawns;
 
 use crate::board::Board;
+use crate::eval::double_pawns::double_pawns;
 use crate::eval::mobility::mobility;
 use crate::eval::piece_values::piece_values;
 use crate::eval::push_pawns::push_pawns;
@@ -14,5 +16,6 @@ pub fn eval_pos(board: &Board) -> i32 {
     eval += piece_values(board);
     eval += push_pawns(board);
     eval += mobility(board);
+    eval += double_pawns(board);
     eval
 }
