@@ -59,8 +59,9 @@ impl TranspositionTable {
     pub fn store(&mut self, hash: u64, depth: u8, score: i32, flag: TTFlag, best_move: Move) {
         let idx = (hash as usize) & self.mask;
         let existing = self.entries[idx];
-        // Always replace if higher depth or empty
-        if existing.flag == TTFlag::Empty || depth >= existing.depth || existing.key != hash {
+
+        if existing.flag == TTFlag::Empty {
+            self.stored += 1;
             self.entries[idx] = TTEntry {
                 key: hash,
                 best_move,
@@ -69,8 +70,21 @@ impl TranspositionTable {
                 flag,
             };
         }
-        if existing.flag == TTFlag::Empty {
-            self.stored += 1;
+
+        // Replace if higher depth or same position
+        if depth >= existing.depth || existing.key == hash {
+            let final_move = if existing.key == hash && best_move == Move::NULL {
+                existing.best_move
+            } else {
+                best_move
+            };
+            self.entries[idx] = TTEntry {
+                key: hash,
+                best_move: final_move,
+                score,
+                depth,
+                flag,
+            };
         }
     }
 
