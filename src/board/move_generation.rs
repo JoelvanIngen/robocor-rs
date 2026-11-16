@@ -11,9 +11,7 @@ use crate::move_gen::{
 
 impl Board {
     /// Generate all pseudo-legal moves for a given colour
-    pub fn generate_pl_moves(&self, ctx: &CheckContext, colour: PieceColour) -> MoveList {
-        let mut moves = MoveList::new();
-
+    pub fn generate_pl_moves(&self, moves: &mut MoveList, ctx: &CheckContext, colour: PieceColour) {
         let piece_bitboard = self.bitboards[colour as usize];
         let (friendly, enemy) = match colour {
             White => (
@@ -27,7 +25,7 @@ impl Board {
         };
 
         get_pl_moves_king(
-            &mut moves,
+            moves,
             piece_bitboard[King as usize].get_square(),
             friendly,
             enemy,
@@ -37,16 +35,16 @@ impl Board {
         // If 2 pieces give check simultaneously, king move is forced so no point computing other pieces
         if ctx.checkers.count() < 2 {
             for pos in piece_bitboard[Bishop as usize].iter() {
-                get_pl_moves_bishop(&mut moves, pos, friendly, enemy)
+                get_pl_moves_bishop(moves, pos, friendly, enemy)
             }
 
             for pos in piece_bitboard[Knight as usize].iter() {
-                get_pl_moves_knight(&mut moves, pos, friendly, enemy)
+                get_pl_moves_knight(moves, pos, friendly, enemy)
             }
 
             for pos in piece_bitboard[Pawn as usize].iter() {
                 get_pl_moves_pawn(
-                    &mut moves,
+                    moves,
                     pos,
                     friendly,
                     enemy,
@@ -56,15 +54,13 @@ impl Board {
             }
 
             for pos in piece_bitboard[Queen as usize].iter() {
-                get_pl_moves_queen(&mut moves, pos, friendly, enemy)
+                get_pl_moves_queen(moves, pos, friendly, enemy)
             }
 
             for pos in piece_bitboard[Rook as usize].iter() {
-                get_pl_moves_rook(&mut moves, pos, friendly, enemy)
+                get_pl_moves_rook(moves, pos, friendly, enemy)
             }
         }
-
-        moves
     }
 
     /// Shortcut to generate legal moves for the current colour
@@ -82,11 +78,8 @@ impl Board {
         moves.clear();
 
         let ctx = self.check_context(colour);
+        self.generate_pl_moves(moves, &ctx, colour);
 
-        for pl_move in self.generate_pl_moves(&ctx, colour) {
-            if self.is_legal(pl_move, colour, &ctx) {
-                moves.push(pl_move);
-            }
-        }
+        moves.retain(|m| self.is_legal(*m, colour, &ctx));
     }
 }
