@@ -47,7 +47,7 @@ struct SearchContext {
     // Tries moves that frequently cause cutoffs first
     // as they should generally be good moves
     // https://chessprogramming.org/History_Heuristic
-    history: [[[i32; MAX_PLY]; MAX_PLY]; 2],
+    history: [[[i32; 64]; 64]; 2],
     tt: TranspositionTable,
 }
 
