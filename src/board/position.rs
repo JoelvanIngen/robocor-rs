@@ -195,10 +195,6 @@ impl Board {
         self.bitboards[piece.colour as usize][piece.kind as usize]
     }
 
-    fn get_mut_bitboard(&mut self, piece: Piece) -> &mut BitBoard {
-        &mut self.bitboards[piece.colour as usize][piece.kind as usize]
-    }
-
     pub fn get_castling_rights(&self, colour: PieceColour) -> ArrayVec<Square, 2> {
         let mut options = ArrayVec::<Square, 2>::new();
         match colour {
