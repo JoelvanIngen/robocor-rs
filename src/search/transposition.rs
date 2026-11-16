@@ -31,6 +31,8 @@ impl TTEntry {
 pub struct TranspositionTable {
     entries: Vec<TTEntry>,
     mask: usize,
+    size: usize,
+    stored: usize,
 }
 
 impl TranspositionTable {
@@ -39,6 +41,8 @@ impl TranspositionTable {
         Self {
             entries: vec![TTEntry::EMPTY; size],
             mask: size - 1,
+            size,
+            stored: 0,
         }
     }
 
@@ -65,6 +69,13 @@ impl TranspositionTable {
                 flag,
             };
         }
+        if existing.flag == TTFlag::Empty {
+            self.stored += 1;
+        }
+    }
+
+    pub fn percent_full(&self) -> usize {
+        (self.stored * 100) / self.size
     }
 }
 

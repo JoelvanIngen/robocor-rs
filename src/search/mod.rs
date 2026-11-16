@@ -7,12 +7,13 @@ use crate::chess::moves::MoveKind::EnPassant;
 use crate::chess::moves::{Move, MoveList};
 use crate::chess::piece::PieceKind;
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
+use crate::engine::UciReport;
 use crate::search::negamax::negamax;
 use crate::search::transposition::TranspositionTable;
 
 const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
-const MAX_PLY: usize = 64;
+pub const MAX_PLY: usize = 64;
 const MATE_THRESHOLD: i32 = MATE - MAX_PLY as i32;
 
 /// Avoids having to repeatedly allocate and move data
@@ -59,7 +60,7 @@ impl SearchContext {
             pv_len: [0; MAX_PLY],
             killers: [[Move::NULL; 2]; MAX_PLY],
             history: [[[0; MAX_PLY]; MAX_PLY]; 2],
-            tt: TranspositionTable::new(1 << 20),
+            tt: TranspositionTable::new(1 << 24),
         }
     }
 
@@ -76,6 +77,22 @@ impl SearchContext {
     fn root_pv(&self) -> &[Move] {
         &self.pv_table[0][..self.pv_len[0]]
     }
+}
+
+fn update_report(
+    report: &mut UciReport,
+    depth: u8,
+    score: i32,
+    nodes: u64,
+    hashfull: usize,
+    pv: &[Move],
+) {
+    report.depth = depth as usize;
+    report.score = score;
+    report.nodes = nodes as usize;
+    report.hashfull = hashfull;
+    report.pv.clear();
+    let _ = report.pv.try_extend_from_slice(pv);
 }
 
 /// For beta cutoff: better to analyse high-valued pieces first
@@ -163,11 +180,14 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
 /// https://chessprogramming.org/Negamax
 pub fn best_move(
     board: &Board,
-    on_info: impl Fn(u8, i32, u64, &[Move]), // depth, cp, nodes, pv
+    report: &mut UciReport,
+    on_info: impl Fn(&UciReport),
     depth: u8,
 ) -> Option<Move> {
     let mut ctx = SearchContext::new();
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
+
+    report.start_timer();
 
     let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
     let moves = &mut sf.moves;
@@ -204,7 +224,15 @@ pub fn best_move(
             alpha = score;
             best = m;
             ctx.update_pv(0, m);
-            on_info(depth, alpha, ctx.nodes, ctx.root_pv());
+            update_report(
+                report,
+                depth,
+                alpha,
+                ctx.nodes,
+                ctx.tt.percent_full(),
+                ctx.root_pv(),
+            );
+            on_info(report);
         }
     }
 
@@ -213,10 +241,13 @@ pub fn best_move(
 
 pub fn search_infinite(
     board: &Board,
-    on_info: impl Fn(u8, i32, u64, &[Move]), // depth, cp, nodes, pv
+    report: &mut UciReport,
+    on_info: impl Fn(&UciReport),
 ) -> Option<Move> {
     let mut ctx = SearchContext::new();
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
+
+    report.start_timer();
 
     let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
     let moves = &mut sf.moves;
@@ -253,7 +284,15 @@ pub fn search_infinite(
                 alpha = score;
                 depth_best = m;
                 ctx.update_pv(0, m);
-                on_info(depth, alpha, ctx.nodes, ctx.root_pv());
+                update_report(
+                    report,
+                    depth,
+                    alpha,
+                    ctx.nodes,
+                    ctx.tt.percent_full(),
+                    ctx.root_pv(),
+                );
+                on_info(report);
             }
         }
 
@@ -262,7 +301,15 @@ pub fn search_infinite(
         }
 
         best_move = depth_best;
-        on_info(depth, alpha, ctx.nodes, ctx.root_pv());
+        update_report(
+            report,
+            depth,
+            alpha,
+            ctx.nodes,
+            ctx.tt.percent_full(),
+            ctx.root_pv(),
+        );
+        on_info(report);
     }
 
     Some(best_move)

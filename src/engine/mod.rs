@@ -1,5 +1,7 @@
+mod reporting;
+
 use crate::board::Board;
-use crate::chess::moves::Move;
+pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
 use crate::search::search_infinite;
 use crate::uci::Command::{Go, Position};
@@ -74,12 +76,10 @@ impl Engine {
             }
         };
 
-        let best_move = search_infinite(board, |depth: u8, cp: i32, nodes: u64, pv: &[Move]| {
-            let pv_str = pv.iter().map(Move::to_uci).collect::<Vec<_>>().join(" ");
+        let mut report = UciReport::new();
+        let best_move = search_infinite(board, &mut report, |report: &UciReport| {
             self.uci_tx
-                .send(format!(
-                    "info depth {depth} score cp {cp} nodes {nodes} pv {pv_str}"
-                ))
+                .send(report.to_str())
                 .expect("failed to send analysis info from engine to uci")
         });
         let move_str = best_move.map_or_else(|| String::from("a1a1"), |m| m.to_uci());
