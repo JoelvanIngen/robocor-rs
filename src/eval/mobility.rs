@@ -12,10 +12,10 @@ use crate::move_gen::{
 /// Bishops get stuck easily but can also reach many squares, so moderate high score
 /// Rooks and especially queens are good at maneuvering out of tricky positions,
 /// so lower score
-const KNIGHT_MOBILITY: i32 = 50;
-const BISHOP_MOBILITY: i32 = 20;
-const ROOK_MOBILITY: i32 = 15;
-const QUEEN_MOBILITY: i32 = 10;
+const KNIGHT_MOBILITY: i32 = 5;
+const BISHOP_MOBILITY: i32 = 2;
+const ROOK_MOBILITY: i32 = 2;
+const QUEEN_MOBILITY: i32 = 1;
 
 /// Creating positions where you have a lot of mobility and the enemy's
 /// pieces are trapped, is usually good. This also encourages opening up
