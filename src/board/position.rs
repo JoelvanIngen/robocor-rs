@@ -1,12 +1,12 @@
 use crate::board::Board;
 use crate::board::position::GameState::{Draw, Ongoing, Won};
 use crate::chess::bitboard::BitBoard;
-use crate::chess::moves::Move;
 use crate::chess::moves::MoveKind::{
     BishopPromotion, BishopPromotionCapture, DoublePawnPush, EnPassant, KingCastle,
     KnightPromotion, KnightPromotionCapture, QueenCastle, QueenPromotion, QueenPromotionCapture,
     RookPromotion, RookPromotionCapture,
 };
+use crate::chess::moves::{Move, MoveList};
 use crate::chess::piece::PieceColour::{Black, White};
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::chess::piece::{Piece, PieceColour, PieceKind};
@@ -157,7 +157,7 @@ impl Board {
         self.update_hash();
     }
 
-    pub fn game_state(&self) -> GameState {
+    pub fn game_state(&self, moves: &mut MoveList) -> GameState {
         if self.halfmove_clock > 100 {
             return Draw;
         }
@@ -165,14 +165,15 @@ impl Board {
             // Only kings remain
             return Draw;
         }
-        let legal_moves = self.generate_moves();
+
+        self.generate_moves(moves);
         if self.is_bb_attacked(self.turn, self.get_bitboard(Piece::new(King, self.turn)))
-            && legal_moves.is_empty()
+            && moves.is_empty()
         {
             // Checkmate
             return Won(self.turn.other());
         }
-        if legal_moves.is_empty() {
+        if moves.is_empty() {
             // Stalemate
             return Draw;
         }

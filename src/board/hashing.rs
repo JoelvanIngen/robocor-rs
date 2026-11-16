@@ -22,6 +22,7 @@ impl Board {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::chess::moves::MoveList;
     use crate::chess::zobrist::calculate_hash;
 
     /// Walks all possible moves within a certain depth
@@ -42,7 +43,9 @@ mod tests {
         if depth == 0 {
             return;
         }
-        for m in board.generate_moves() {
+        let mut moves = MoveList::new();
+        board.generate_moves(&mut moves);
+        for m in moves {
             let mut new_board = board;
             new_board.apply_move(m);
             walk_and_check_hash(new_board, depth - 1);

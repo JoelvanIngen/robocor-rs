@@ -68,8 +68,8 @@ impl Board {
     }
 
     /// Shortcut to generate legal moves for the current colour
-    pub fn generate_moves(&self) -> MoveList {
-        self.generate_moves_colour(self.turn)
+    pub fn generate_moves(&self, moves: &mut MoveList) {
+        self.generate_moves_colour(moves, self.turn)
     }
 
     /// Generate all legal moves for a given colour
@@ -77,16 +77,16 @@ impl Board {
     /// Whilst only the colour whose turn it is, is allowed to move,
     /// analysis might require finding potential moves in absence
     /// of a move (threat finding), so takes colour explicitly
-    pub fn generate_moves_colour(&self, colour: PieceColour) -> MoveList {
+    /// Clears passed movelist before writing
+    pub fn generate_moves_colour(&self, moves: &mut MoveList, colour: PieceColour) {
+        moves.clear();
+
         let ctx = self.check_context(colour);
-        let mut moves = MoveList::new();
 
         for pl_move in self.generate_pl_moves(&ctx, colour) {
             if self.is_legal(pl_move, colour, &ctx) {
                 moves.push(pl_move);
             }
         }
-
-        moves
     }
 }

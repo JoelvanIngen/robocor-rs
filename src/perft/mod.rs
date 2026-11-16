@@ -1,11 +1,16 @@
 use crate::board::Board;
+use crate::chess::moves::MoveList;
 use std::time::Instant;
+
+const MAX_DEPTH: usize = 16;
+type MoveListStack = [MoveList; MAX_DEPTH];
 
 pub fn perft(depth: u8) {
     let board = Board::start_position();
+    let mut move_stack: MoveListStack = std::array::from_fn(|_| MoveList::new());
 
     let start_time = Instant::now();
-    let n_moves = calc_positions(board, depth);
+    let n_moves = calc_positions(board, &mut move_stack, depth);
     let end_time = Instant::now();
 
     let duration = end_time - start_time;
@@ -19,12 +24,13 @@ pub fn perft(depth: u8) {
 }
 
 /// Recursively calculates the number of positions
-fn calc_positions(board: Board, remaining_depth: u8) -> usize {
+fn calc_positions(board: Board, move_stack: &mut [MoveList], remaining_depth: u8) -> usize {
     if remaining_depth == 0 {
         return 1;
     }
 
-    let moves = board.generate_moves();
+    let (moves, rest) = move_stack.split_first_mut().unwrap();
+    board.generate_moves(moves);
     if remaining_depth == 1 {
         return moves.len();
     }
@@ -33,9 +39,9 @@ fn calc_positions(board: Board, remaining_depth: u8) -> usize {
 
     for m in moves {
         let mut m_board = board;
-        m_board.apply_move(m);
+        m_board.apply_move(*m);
 
-        move_number += calc_positions(m_board, remaining_depth - 1);
+        move_number += calc_positions(m_board, rest, remaining_depth - 1);
     }
 
     move_number
@@ -49,7 +55,8 @@ mod tests {
 
     fn perform_perft_test(fen: &str, depth: u8, expected: usize) {
         let board = Board::from_fen(fen).expect(format!("Failed to parse fen {}", fen).as_str());
-        let res = calc_positions(board, depth);
+        let mut move_stack: MoveListStack = std::array::from_fn(|_| MoveList::new());
+        let res = calc_positions(board, &mut move_stack, depth);
         assert_eq!(
             res, expected,
             "Expected to find {expected} positions, found {res}"

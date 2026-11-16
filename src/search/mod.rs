@@ -1,3 +1,4 @@
+mod negamax;
 mod quiescence;
 mod transposition;
 
@@ -6,13 +7,28 @@ use crate::chess::moves::MoveKind::EnPassant;
 use crate::chess::moves::{Move, MoveList};
 use crate::chess::piece::PieceKind;
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
-use crate::search::quiescence::quiescence;
-use crate::search::transposition::{TTFlag, TranspositionTable, score_from_tt, score_to_tt};
+use crate::search::negamax::negamax;
+use crate::search::transposition::TranspositionTable;
 
 const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
 const MAX_PLY: usize = 64;
 const MATE_THRESHOLD: i32 = MATE - MAX_PLY as i32;
+
+/// Avoids having to repeatedly allocate and move data
+struct SearchFrame {
+    pub moves: MoveList,
+    pub scores: [i32; 256],
+}
+
+impl SearchFrame {
+    fn new() -> Self {
+        Self {
+            moves: MoveList::new(),
+            scores: [0; 256],
+        }
+    }
+}
 
 struct SearchContext {
     // Counts nodes as search termination metric or UCI stat reporting
@@ -114,17 +130,16 @@ fn score_move(board: &Board, m: Move, tt_move: Move, ctx: &SearchContext, ply: u
 
 /// Generate move scores for all moves
 fn score_moves(
+    scores: &mut [i32; 256],
     board: &Board,
     moves: &MoveList,
     tt_move: Move,
     ctx: &SearchContext,
     ply: usize,
-) -> [i32; 256] {
-    let mut scores = [0; 256];
+) {
     for (i, &m) in moves.iter().enumerate() {
         scores[i] = score_move(board, m, tt_move, ctx, ply);
     }
-    scores
 }
 
 /// Swaps the highest-scoring move into `moves[idx]`
@@ -146,8 +161,19 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
 }
 
 /// https://chessprogramming.org/Negamax
-pub fn best_move(board: &Board, depth: u8) -> Option<Move> {
-    let moves = board.generate_moves();
+pub fn best_move(
+    board: &Board,
+    on_info: impl Fn(u8, i32, u64, &[Move]), // depth, cp, nodes, pv
+    depth: u8,
+) -> Option<Move> {
+    let mut ctx = SearchContext::new();
+    let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
+
+    let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
+    let moves = &mut sf.moves;
+    let scores = &mut sf.scores;
+
+    board.generate_moves(moves);
     if moves.is_empty() {
         return None;
     }
@@ -157,142 +183,51 @@ pub fn best_move(board: &Board, depth: u8) -> Option<Move> {
         return Some(best);
     }
 
-    let mut ctx = SearchContext::new();
     let mut alpha = -INF;
     let beta = INF;
+    ctx.pv_len[0] = 0;
+    ctx.nodes += 1;
+    score_moves(scores, board, &moves, best, &ctx, 0);
 
-    for m in moves {
+    for i in 0..moves.len() {
+        pick_move(moves, scores, i);
+        let m = moves[i];
+
         let mut next_board = *board;
         next_board.apply_move(m);
-        let score = -negamax(&next_board, &mut ctx, depth - 1, -beta, -alpha, 1);
+        let score = -negamax(&next_board, &mut ctx, sf_rest, depth - 1, -beta, -alpha, 1);
 
+        if ctx.aborted {
+            break;
+        }
         if score > alpha {
             alpha = score;
             best = m;
+            ctx.update_pv(0, m);
+            on_info(depth, alpha, ctx.nodes, ctx.root_pv());
         }
     }
 
     Some(best)
 }
 
-/// https://chessprogramming.org/Negamax
-fn negamax(
-    board: &Board,
-    ctx: &mut SearchContext,
-    depth: u8,
-    mut alpha: i32,
-    beta: i32,
-    ply: u8,
-) -> i32 {
-    let ply_idx = ply as usize;
-    ctx.pv_len[ply_idx] = 0; // Reset PV from prior branches
-
-    if depth == 0 || ply_idx >= MAX_PLY - 1 {
-        return quiescence(board, ctx, alpha, beta, ply);
-    }
-
-    ctx.nodes += 1;
-
-    // Try transposition table
-    let mut tt_move = Move::NULL;
-    if let Some(entry) = ctx.tt.get(board.hash()) {
-        tt_move = entry.best_move;
-        if entry.depth >= depth {
-            let tt_score = score_from_tt(entry.score, ply);
-            match entry.flag {
-                TTFlag::Exact => return tt_score,
-                TTFlag::LowerBound if tt_score >= beta => return beta,
-                TTFlag::UpperBound if tt_score <= alpha => return alpha,
-                _ => {}
-            }
-            if alpha >= beta {
-                return tt_score;
-            }
-        }
-    }
-
-    // Generate legal moves
-    let mut moves = board.generate_moves();
-    if moves.is_empty() {
-        return if board.is_in_check() {
-            // Delay getting mated
-            -MATE + ply as i32
-        } else {
-            // Stalemate
-            0
-        };
-    };
-
-    let orig_alpha = alpha;
-    let mut best_move = Move::NULL;
-    let mut scores = score_moves(board, &moves, tt_move, ctx, ply_idx);
-
-    for i in 0..moves.len() {
-        pick_move(&mut moves, &mut scores, i);
-        let m = moves[i];
-
-        let mut next_board = *board;
-        next_board.apply_move(m);
-        let score = -negamax(&next_board, ctx, depth - 1, -beta, -alpha, ply + 1);
-
-        if ctx.aborted {
-            return alpha;
-        }
-
-        if score >= beta {
-            // Update killers and history
-            if !m.is_capture() && ctx.killers[ply_idx][0] != m {
-                ctx.killers[ply_idx][1] = ctx.killers[ply_idx][0];
-                ctx.killers[ply_idx][0] = m;
-            }
-            if !m.is_capture() {
-                ctx.history[board.turn() as usize][m.from().idx()][m.to().idx()] +=
-                    (depth as i32) * (depth as i32);
-            }
-
-            ctx.tt.store(
-                board.hash(),
-                depth,
-                score_to_tt(beta, ply),
-                TTFlag::LowerBound,
-                m,
-            );
-            return beta;
-        }
-        if score > alpha {
-            alpha = score;
-            best_move = m;
-            ctx.update_pv(ply_idx, m);
-        }
-    }
-
-    let flag = if alpha > orig_alpha {
-        TTFlag::Exact
-    } else {
-        TTFlag::UpperBound
-    };
-    ctx.tt.store(
-        board.hash(),
-        depth,
-        score_to_tt(alpha, ply),
-        flag,
-        best_move,
-    );
-
-    alpha
-}
-
 pub fn search_infinite(
     board: &Board,
-    on_info: impl Fn(u8, i32, u64, &[Move]), // depth, cp, nodes, best move
+    on_info: impl Fn(u8, i32, u64, &[Move]), // depth, cp, nodes, pv
 ) -> Option<Move> {
-    let mut moves = board.generate_moves();
+    let mut ctx = SearchContext::new();
+    let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
+
+    let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
+    let moves = &mut sf.moves;
+    let scores = &mut sf.scores;
+
+    board.generate_moves(moves);
     if moves.is_empty() {
         return None;
     }
 
     let mut best_move = moves[0];
-    let mut ctx = SearchContext::new();
 
     for depth in 1..=MAX_PLY as u8 - 1 {
         let mut alpha = -INF;
@@ -301,15 +236,15 @@ pub fn search_infinite(
         ctx.pv_len[0] = 0;
 
         ctx.nodes += 1;
-        let mut scores = score_moves(board, &moves, best_move, &ctx, 0);
+        score_moves(scores, board, moves, best_move, &ctx, 0);
 
         for i in 0..moves.len() {
-            pick_move(&mut moves, &mut scores, i);
+            pick_move(moves, scores, i);
             let m = moves[i];
 
             let mut next_board = *board;
             next_board.apply_move(m);
-            let score = -negamax(&next_board, &mut ctx, depth - 1, -beta, -alpha, 1);
+            let score = -negamax(&next_board, &mut ctx, sf_rest, depth - 1, -beta, -alpha, 1);
 
             if ctx.aborted {
                 break;
