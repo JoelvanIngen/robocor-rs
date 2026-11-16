@@ -13,6 +13,10 @@ impl Board {
             self.hash ^= ZOBRIST.side_to_move;
         }
     }
+
+    pub fn hash(&self) -> u64 {
+        self.hash
+    }
 }
 
 #[cfg(test)]
