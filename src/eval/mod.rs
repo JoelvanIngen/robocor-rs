@@ -12,7 +12,7 @@ use crate::eval::push_pawns::push_pawns;
 use crate::eval::square_attacks::square_attacks;
 
 /// Receives a board and computes an evaluation for white in centipawns
-/// Blacks evaluation would be -eval
+/// Black's evaluation would be -eval
 pub fn eval_pos(board: &Board) -> i32 {
     piece_values(board)
         + push_pawns(board)
