@@ -62,7 +62,7 @@ impl Board {
     /// Retrieves a piece from a square if the piece colour is known
     /// A piece of the provided colour must exist on the square
     #[inline(always)]
-    fn get_colour_piece(&self, square: Square, colour: PieceColour) -> Piece {
+    pub fn get_colour_piece(&self, square: Square, colour: PieceColour) -> Piece {
         let idx = square.idx();
 
         for kind in PieceKind::ALL {

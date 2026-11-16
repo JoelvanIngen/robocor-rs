@@ -50,7 +50,7 @@ pub fn quiescence(
             let captured_val = if m.kind() == EnPassant {
                 100
             } else {
-                piece_value(board.get_piece(m.to()).unwrap().kind)
+                piece_value(board.get_colour_piece(m.to(), board.turn().other()).kind)
             };
             if do_nothing + captured_val + 200 < alpha {
                 continue;
