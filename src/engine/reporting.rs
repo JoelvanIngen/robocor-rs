@@ -14,7 +14,7 @@ pub struct UciReport {
     start_time: Instant,
 }
 
-impl<'a> UciReport {
+impl UciReport {
     pub fn new() -> Self {
         Self {
             depth: 0,
