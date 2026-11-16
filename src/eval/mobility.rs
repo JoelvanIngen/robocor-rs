@@ -40,9 +40,8 @@ pub fn mobility(board: &Board) -> i32 {
 /// Not adjusted for colour
 fn mobility_knight(board: &Board, colour: PieceColour) -> i32 {
     let mut eval = 0;
-    let friendly = board.get_colour_bitboard(colour);
     for pos in board.get_bitboard(Piece::new(Knight, colour)).iter() {
-        eval += (get_attacks_knight(pos) & !friendly).count() as i32 * KNIGHT_MOBILITY
+        eval += get_attacks_knight(pos).count() as i32 * KNIGHT_MOBILITY
     }
     eval
 }
@@ -53,8 +52,7 @@ fn mobility_bishop(board: &Board, colour: PieceColour) -> i32 {
     let friendly = board.get_colour_bitboard(colour);
     let enemy = board.get_colour_bitboard(colour.other());
     for pos in board.get_bitboard(Piece::new(Bishop, colour)).iter() {
-        eval +=
-            (get_attacks_bishop(pos, friendly, enemy) & !friendly).count() as i32 * BISHOP_MOBILITY
+        eval += get_attacks_bishop(pos, friendly, enemy).count() as i32 * BISHOP_MOBILITY
     }
     eval
 }
@@ -65,7 +63,7 @@ fn mobility_rook(board: &Board, colour: PieceColour) -> i32 {
     let friendly = board.get_colour_bitboard(colour);
     let enemy = board.get_colour_bitboard(colour.other());
     for pos in board.get_bitboard(Piece::new(Rook, colour)).iter() {
-        eval += (get_attacks_rook(pos, friendly, enemy) & !friendly).count() as i32 * ROOK_MOBILITY
+        eval += get_attacks_rook(pos, friendly, enemy).count() as i32 * ROOK_MOBILITY
     }
     eval
 }
@@ -76,8 +74,7 @@ fn mobility_queen(board: &Board, colour: PieceColour) -> i32 {
     let friendly = board.get_colour_bitboard(colour);
     let enemy = board.get_colour_bitboard(colour.other());
     for pos in board.get_bitboard(Piece::new(Queen, colour)).iter() {
-        eval +=
-            (get_attacks_queen(pos, friendly, enemy) & !friendly).count() as i32 * QUEEN_MOBILITY
+        eval += get_attacks_queen(pos, friendly, enemy).count() as i32 * QUEEN_MOBILITY
     }
     eval
 }
