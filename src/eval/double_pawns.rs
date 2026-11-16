@@ -21,7 +21,7 @@ pub fn double_pawns(board: &Board) -> i32 {
     let pawns_black = board.get_bitboard(Piece::new(Pawn, Black));
     for col in 0..8 {
         let n = (pawns_black.to_u64() & (COL_A << col)).count_ones() as i32;
-        count_white += (n - 1).max(0);
+        count_black += (n - 1).max(0);
     }
 
     (count_white - count_black) * PENALTY
