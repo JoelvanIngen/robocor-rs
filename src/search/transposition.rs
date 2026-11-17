@@ -46,6 +46,11 @@ impl TranspositionTable {
         }
     }
 
+    pub fn clear(&mut self) {
+        self.entries.fill(TTEntry::EMPTY);
+        self.stored = 0;
+    }
+
     pub fn get(&self, hash: u64) -> Option<TTEntry> {
         let entry = self.entries[(hash as usize) & self.mask];
         // Not empty and not accidental collision

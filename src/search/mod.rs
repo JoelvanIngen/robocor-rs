@@ -10,7 +10,7 @@ use crate::chess::piece::PieceKind;
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::engine::UciReport;
 use crate::search::negamax::negamax;
-use crate::search::transposition::TranspositionTable;
+pub use crate::search::transposition::TranspositionTable;
 
 const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
@@ -33,7 +33,7 @@ impl SearchFrame {
     }
 }
 
-struct SearchContext {
+struct SearchContext<'a> {
     // Counts nodes as search termination metric or UCI stat reporting
     nodes: u64,
     // Can be set to true to abort search
@@ -50,11 +50,11 @@ struct SearchContext {
     // as they should generally be good moves
     // https://chessprogramming.org/History_Heuristic
     history: [[[i32; 64]; 64]; 2],
-    tt: TranspositionTable,
+    tt: &'a mut TranspositionTable,
 }
 
-impl SearchContext {
-    fn new() -> SearchContext {
+impl<'a> SearchContext<'a> {
+    fn new(tt: &'a mut TranspositionTable) -> SearchContext<'a> {
         Self {
             nodes: 0,
             aborted: false,
@@ -62,7 +62,7 @@ impl SearchContext {
             pv_len: [0; MAX_PLY],
             killers: [[Move::NULL; 2]; MAX_PLY],
             history: [[[0; MAX_PLY]; MAX_PLY]; 2],
-            tt: TranspositionTable::new(1 << 24),
+            tt,
         }
     }
 
@@ -182,11 +182,12 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
 /// https://chessprogramming.org/Negamax
 pub fn best_move(
     board: &Board,
+    tt: &mut TranspositionTable,
     report: &mut UciReport,
     on_info: impl Fn(&UciReport),
     depth: u8,
 ) -> Option<Move> {
-    let mut ctx = SearchContext::new();
+    let mut ctx = SearchContext::new(tt);
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
 
     report.start_timer();
@@ -252,10 +253,11 @@ pub fn best_move(
 
 pub fn search_infinite(
     board: &Board,
+    tt: &mut TranspositionTable,
     report: &mut UciReport,
     on_info: impl Fn(&UciReport),
 ) -> Option<Move> {
-    let mut ctx = SearchContext::new();
+    let mut ctx = SearchContext::new(tt);
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
 
     report.start_timer();

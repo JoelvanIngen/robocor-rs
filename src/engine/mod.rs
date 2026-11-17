@@ -4,7 +4,7 @@ use crate::board::{Board, Square};
 use crate::chess::moves::MoveList;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
-use crate::search::search_infinite;
+use crate::search::{TranspositionTable, search_infinite};
 use crate::uci::Command::{Go, Position};
 use crate::uci::GoOptions::Infinite;
 use crate::uci::PositionInitType::{Fen, StartPos};
@@ -13,10 +13,13 @@ use std::process::exit;
 use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 
+const DEFAULT_TT_SHIFT: usize = 24;
+
 pub struct Engine {
     uci_tx: Sender<String>,
     uci_rx: Receiver<Command>,
     board: Option<Board>,
+    tt: TranspositionTable,
 }
 
 impl Engine {
@@ -25,6 +28,7 @@ impl Engine {
             uci_tx,
             uci_rx,
             board: None,
+            tt: TranspositionTable::new(1 << DEFAULT_TT_SHIFT),
         }
     }
 
@@ -41,6 +45,11 @@ impl Engine {
                 }
             }
         }
+    }
+
+    fn handle_new_game(&mut self) {
+        self.board = None;
+        self.tt.clear();
     }
 
     fn handle_go(&mut self, opts: GoOptions) {
@@ -109,7 +118,7 @@ impl Engine {
         };
 
         let mut report = UciReport::new();
-        let best_move = search_infinite(board, &mut report, |report: &UciReport| {
+        let best_move = search_infinite(board, &mut self.tt, &mut report, |report: &UciReport| {
             self.uci_tx
                 .send(report.to_str())
                 .expect("failed to send analysis info from engine to uci")
