@@ -1,5 +1,6 @@
 use crate::board::Board;
 use crate::chess::moves::Move;
+use crate::search::lmr::lmr_reduction;
 use crate::search::quiescence::quiescence;
 use crate::search::transposition::{TTFlag, score_from_tt, score_to_tt};
 use crate::search::{
@@ -47,10 +48,12 @@ pub fn negamax(
         }
     }
 
+    let in_check = board.is_in_check();
+
     // Generate legal moves
     board.generate_moves(moves);
     if moves.is_empty() {
-        return if board.is_in_check() {
+        return if in_check {
             // Delay getting mated
             -MATE + ply as i32
         } else {
@@ -69,7 +72,39 @@ pub fn negamax(
 
         let mut next_board = *board;
         next_board.apply_move(m);
-        let score = -negamax(&next_board, ctx, sf_rest, depth - 1, -beta, -alpha, ply + 1);
+
+        let score = if depth >= 3
+            && i >= 3
+            && !in_check
+            && !m.is_capture()
+            && !m.is_promotion()
+            && !next_board.is_in_check()
+            && m != ctx.killers[ply_idx][0]
+            && m != ctx.killers[ply_idx][1]
+        {
+            // Reduce depth for less-interesting moves
+            // Minimum of 2 to prevent jumping into quiescence
+            let r = lmr_reduction(depth, i).min(depth - 2);
+            let reduced_score = -negamax(
+                &next_board,
+                ctx,
+                sf_rest,
+                depth - 1 - r,
+                -alpha - 1,
+                -alpha,
+                ply + 1,
+            );
+
+            // Re-search if reduced search beats alpha
+            if reduced_score > alpha && !ctx.aborted {
+                -negamax(&next_board, ctx, sf_rest, depth - 1, -beta, -alpha, ply + 1)
+            } else {
+                reduced_score
+            }
+        } else {
+            // Normal search
+            -negamax(&next_board, ctx, sf_rest, depth - 1, -beta, -alpha, ply + 1)
+        };
 
         if ctx.aborted {
             return alpha;
