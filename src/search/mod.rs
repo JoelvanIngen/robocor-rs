@@ -8,9 +8,13 @@ use crate::chess::moves::MoveKind::EnPassant;
 use crate::chess::moves::{Move, MoveList};
 use crate::chess::piece::PieceKind;
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
-use crate::engine::UciReport;
+use crate::engine::{SearchLimits, UciReport};
 use crate::search::negamax::negamax;
 pub use crate::search::transposition::TranspositionTable;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::Relaxed;
+use std::time::Instant;
 
 const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
@@ -38,6 +42,10 @@ struct SearchContext<'a> {
     nodes: u64,
     // Can be set to true to abort search
     aborted: bool,
+    // Set by engine
+    abort_flag: &'a AtomicBool,
+    // Immediately abort when reached
+    hard_deadline: Option<Instant>,
     // Triangular PV table
     // Prevents overwriting PV when backtracking
     pv_table: [[Move; MAX_PLY]; MAX_PLY],
@@ -54,10 +62,16 @@ struct SearchContext<'a> {
 }
 
 impl<'a> SearchContext<'a> {
-    fn new(tt: &'a mut TranspositionTable) -> SearchContext<'a> {
+    fn new(
+        tt: &'a mut TranspositionTable,
+        abort_flag: &'a AtomicBool,
+        hard_deadline: Option<Instant>,
+    ) -> SearchContext<'a> {
         Self {
             nodes: 0,
             aborted: false,
+            abort_flag,
+            hard_deadline,
             pv_table: [[Move::NULL; MAX_PLY]; MAX_PLY],
             pv_len: [0; MAX_PLY],
             killers: [[Move::NULL; 2]; MAX_PLY],
@@ -78,6 +92,16 @@ impl<'a> SearchContext<'a> {
 
     fn root_pv(&self) -> &[Move] {
         &self.pv_table[0][..self.pv_len[0]]
+    }
+
+    fn should_abort(&mut self) -> bool {
+        // Checks every 2048 moves
+        if (!self.aborted && self.nodes & 2047 == 0 && self.abort_flag.load(Relaxed))
+            || self.hard_deadline.is_some_and(|d| Instant::now() >= d)
+        {
+            self.aborted = true;
+        }
+        self.aborted
     }
 }
 
@@ -179,85 +203,15 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
     }
 }
 
-/// https://chessprogramming.org/Negamax
-pub fn best_move(
-    board: &Board,
-    tt: &mut TranspositionTable,
-    report: &mut UciReport,
-    on_info: impl Fn(&UciReport),
-    depth: u8,
-) -> Option<Move> {
-    let mut ctx = SearchContext::new(tt);
-    let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
-
-    report.start_timer();
-
-    let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
-    let moves = &mut sf.moves;
-    let scores = &mut sf.scores;
-
-    board.generate_moves(moves);
-    if moves.is_empty() {
-        return None;
-    }
-
-    let mut best = moves[0];
-    if depth == 0 {
-        return Some(best);
-    }
-
-    let mut alpha = -INF;
-    let beta = INF;
-    ctx.pv_len[0] = 0;
-    ctx.nodes += 1;
-    score_moves(scores, board, &moves, best, &ctx, 0);
-
-    for i in 0..moves.len() {
-        pick_move(moves, scores, i);
-        let m = moves[i];
-
-        let mut next_board = *board;
-        next_board.apply_move(m);
-        let score = -negamax(
-            &next_board,
-            &mut ctx,
-            sf_rest,
-            depth - 1,
-            -beta,
-            -alpha,
-            1,
-            false,
-        );
-
-        if ctx.aborted {
-            break;
-        }
-        if score > alpha {
-            alpha = score;
-            best = m;
-            ctx.update_pv(0, m);
-            update_report(
-                report,
-                depth,
-                alpha,
-                ctx.nodes,
-                ctx.tt.percent_full(),
-                ctx.root_pv(),
-            );
-            on_info(report);
-        }
-    }
-
-    Some(best)
-}
-
 pub fn search_infinite(
     board: &Board,
     tt: &mut TranspositionTable,
+    abort_flag: &Arc<AtomicBool>,
+    search_limits: SearchLimits,
     report: &mut UciReport,
     on_info: impl Fn(&UciReport),
 ) -> Option<Move> {
-    let mut ctx = SearchContext::new(tt);
+    let mut ctx = SearchContext::new(tt, abort_flag, search_limits.hard_deadline);
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
 
     report.start_timer();
@@ -299,7 +253,7 @@ pub fn search_infinite(
                 false,
             );
 
-            if ctx.aborted {
+            if ctx.should_abort() {
                 break;
             }
             if score > alpha {
@@ -318,7 +272,11 @@ pub fn search_infinite(
             }
         }
 
-        if ctx.aborted {
+        if ctx.should_abort()
+            || search_limits
+                .soft_deadline
+                .is_some_and(|d| Instant::now() >= d)
+        {
             break;
         }
 

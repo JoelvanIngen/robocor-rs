@@ -26,6 +26,9 @@ pub fn quiescence(
     let scores = &mut sf.scores;
 
     ctx.nodes += 1;
+    if ctx.should_abort() {
+        return alpha;
+    }
 
     let do_nothing = side_eval(board);
     if ply as usize >= MAX_PLY - 1 {
@@ -66,10 +69,6 @@ pub fn quiescence(
         let mut next_board = *board;
         next_board.apply_move(m);
         let score = -quiescence(&next_board, ctx, sf_rest, -beta, -alpha, ply + 1);
-
-        if ctx.aborted {
-            return alpha;
-        }
 
         if score >= beta {
             return beta;

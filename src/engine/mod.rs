@@ -2,24 +2,47 @@ mod reporting;
 
 use crate::board::{Board, Square};
 use crate::chess::moves::MoveList;
+use crate::chess::piece::PieceColour;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
-use crate::search::{TranspositionTable, search_infinite};
-use crate::uci::Command::{Go, Position, UciNewGame};
-use crate::uci::GoOptions::Infinite;
+use crate::search::{MAX_PLY, TranspositionTable, search_infinite};
+use crate::uci::Command::{Go, Position, Stop, UciNewGame};
 use crate::uci::PositionInitType::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
 use std::process::exit;
 use std::str::FromStr;
+use std::sync::Arc;
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering::Relaxed;
 use std::sync::mpsc::{Receiver, Sender};
+use std::thread;
+use std::thread::JoinHandle;
+use std::time::{Duration, Instant};
 
 const DEFAULT_TT_SHIFT: usize = 24;
+const MOVE_OVERHEAD_MS: usize = 50;
+
+/// Stores search stuff such as the table, since spawning threads
+/// requires static lifetimes and referencing Engine-owned data would
+/// be very annoying
+struct ActiveSearch {
+    abort: Arc<AtomicBool>,
+    handle: JoinHandle<TranspositionTable>,
+}
+
+pub struct SearchLimits {
+    pub max_depth: u8,
+    pub soft_deadline: Option<Instant>,
+    pub hard_deadline: Option<Instant>,
+    pub infinite: bool,
+}
 
 pub struct Engine {
     uci_tx: Sender<String>,
     uci_rx: Receiver<Command>,
     board: Option<Board>,
-    tt: TranspositionTable,
+    tt: Option<TranspositionTable>,
+    active_search: Option<ActiveSearch>,
 }
 
 impl Engine {
@@ -28,7 +51,8 @@ impl Engine {
             uci_tx,
             uci_rx,
             board: None,
-            tt: TranspositionTable::new(1 << DEFAULT_TT_SHIFT),
+            tt: Some(TranspositionTable::new(1 << DEFAULT_TT_SHIFT)),
+            active_search: None,
         }
     }
 
@@ -38,6 +62,7 @@ impl Engine {
                 UciNewGame => self.handle_new_game(),
                 Go(opts) => self.handle_go(opts),
                 Position(opts) => self.handle_position(opts),
+                Stop => self.handle_stop(),
                 cmd => {
                     panic!(
                         "engine received command from uci that shouldn't be passed to engine: {:?}",
@@ -49,14 +74,19 @@ impl Engine {
     }
 
     fn handle_new_game(&mut self) {
+        if self.active_search.is_some() {
+            self.handle_stop()
+        }
         self.board = None;
-        self.tt.clear();
+        self.tt.as_mut().unwrap().clear();
     }
 
-    fn handle_go(&mut self, opts: GoOptions) {
-        match opts {
-            Infinite => self.handle_go_infinite(),
+    fn handle_stop(&mut self) {
+        if let Some(search) = self.active_search.take() {
+            search.abort.store(true, Relaxed);
+            self.tt = Some(search.handle.join().expect("search thread panicked"))
         }
+        self.active_search = None;
     }
 
     fn handle_position(&mut self, opts: PositionOptions) {
@@ -107,9 +137,9 @@ impl Engine {
         exit(1);
     }
 
-    fn handle_go_infinite(&mut self) {
+    fn handle_go(&mut self, opts: GoOptions) {
         let board = match self.board {
-            Some(ref board) => board,
+            Some(board) => board,
             None => {
                 self.uci_tx
                     .send(String::from("sent `go infinite`, but no board was set up"))
@@ -118,15 +148,101 @@ impl Engine {
             }
         };
 
-        let mut report = UciReport::new();
-        let best_move = search_infinite(board, &mut self.tt, &mut report, |report: &UciReport| {
-            self.uci_tx
-                .send(report.to_str())
-                .expect("failed to send analysis info from engine to uci")
+        if self.active_search.is_some() {
+            self.handle_stop()
+        }
+
+        let mut tt = self
+            .tt
+            .take()
+            .expect("transposition table missing in engine");
+        let abort = Arc::new(AtomicBool::new(false));
+        let abort_clone = Arc::clone(&abort);
+        let uci_tx = self.uci_tx.clone();
+
+        let search_limits = compute_search_limits(&board, opts);
+
+        let handle = thread::spawn(move || {
+            let mut report = UciReport::new();
+            let best_move = search_infinite(
+                &board,
+                &mut tt,
+                &abort_clone,
+                search_limits,
+                &mut report,
+                |report: &UciReport| {
+                    uci_tx
+                        .send(report.to_str())
+                        .expect("failed to send analysis info from engine to uci")
+                },
+            );
+            let move_str = best_move.map_or_else(|| String::from("a1a1"), |m| m.to_uci());
+            uci_tx
+                .send(format!("bestmove {move_str}"))
+                .expect("failed to send bestmove from engine to uci");
+            tt
         });
-        let move_str = best_move.map_or_else(|| String::from("a1a1"), |m| m.to_uci());
-        self.uci_tx
-            .send(format!("bestmove {move_str}"))
-            .expect("failed to send bestmove from engine to uci");
+
+        self.active_search = Some(ActiveSearch { abort, handle })
+    }
+}
+
+/// Compute how much time we want to spend on a move
+fn compute_search_limits(board: &Board, opts: GoOptions) -> SearchLimits {
+    let now = Instant::now();
+    let max_depth = opts
+        .depth
+        .unwrap_or((MAX_PLY - 1) as u8)
+        .min((MAX_PLY - 1) as u8);
+
+    if opts.infinite {
+        return SearchLimits {
+            max_depth,
+            soft_deadline: None,
+            hard_deadline: None,
+            infinite: true,
+        };
+    }
+
+    if let Some(mt) = opts.movetime {
+        // Leave some time for overhead
+        let budget = mt.saturating_sub(MOVE_OVERHEAD_MS as u64).max(1);
+        let deadline = Instant::now() + Duration::from_millis(budget);
+        return SearchLimits {
+            max_depth,
+            soft_deadline: Some(deadline),
+            hard_deadline: Some(deadline),
+            infinite: false,
+        };
+    }
+
+    let (time, inc) = match board.turn() {
+        PieceColour::White => (opts.wtime, opts.winc.unwrap_or(0)),
+        PieceColour::Black => (opts.btime, opts.binc.unwrap_or(0)),
+    };
+
+    if let Some(rem) = time {
+        let usable = rem.saturating_sub(MOVE_OVERHEAD_MS as u64);
+
+        // I made this up, needs tweaking
+        let target = (usable / 5) + (inc / 2);
+        // Hard limit: 1.5 times target, or half the remaining time
+        let hard_ms = ((target * 3) / 2).min(usable / 2).max(1);
+        // Soft limit: 0.8 times target
+        let soft_ms = ((target * 8) / 10).min(hard_ms).max(1);
+
+        return SearchLimits {
+            max_depth,
+            soft_deadline: Some(now + Duration::from_millis(soft_ms)),
+            hard_deadline: Some(now + Duration::from_millis(hard_ms)),
+            infinite: false,
+        };
+    }
+
+    SearchLimits {
+        max_depth,
+        soft_deadline: None,
+        hard_deadline: None,
+        infinite: false,
     }
 }

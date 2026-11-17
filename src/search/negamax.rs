@@ -30,6 +30,9 @@ pub fn negamax(
     }
 
     ctx.nodes += 1;
+    if ctx.should_abort() {
+        return alpha;
+    }
 
     // Try transposition table
     let mut tt_move = Move::NULL;
@@ -146,10 +149,6 @@ pub fn negamax(
                 false,
             )
         };
-
-        if ctx.aborted {
-            return alpha;
-        }
 
         if score >= beta {
             // Update killers and history
