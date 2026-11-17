@@ -67,6 +67,10 @@ pub fn quiescence(
         next_board.apply_move(m);
         let score = -quiescence(&next_board, ctx, sf_rest, -beta, -alpha, ply + 1);
 
+        if ctx.aborted {
+            return alpha;
+        }
+
         if score >= beta {
             return beta;
         }
