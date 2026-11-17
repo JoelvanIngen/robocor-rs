@@ -4,7 +4,7 @@ use crate::search::lmr::lmr_reduction;
 use crate::search::quiescence::quiescence;
 use crate::search::transposition::{TTFlag, score_from_tt, score_to_tt};
 use crate::search::{
-    MATE, MAX_HISTORY, MAX_PLY, SearchContext, SearchFrame, pick_move, score_moves,
+    MATE, MATE_THRESHOLD, MAX_HISTORY, MAX_PLY, SearchContext, SearchFrame, pick_move, score_moves,
 };
 
 /// https://chessprogramming.org/Negamax
@@ -16,6 +16,7 @@ pub fn negamax(
     mut alpha: i32,
     beta: i32,
     ply: u8,
+    is_null_move: bool,
 ) -> i32 {
     let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
     let moves = &mut sf.moves;
@@ -49,6 +50,27 @@ pub fn negamax(
     }
 
     let in_check = board.is_in_check();
+
+    // NMP
+    // TODO: Add guards https://chessprogramming.org/Null_Move_Pruning
+    if !is_null_move && !in_check && beta.abs() < MATE_THRESHOLD && depth >= 4 {
+        let mut nmp_board = *board;
+        let r = if depth >= 6 { 3 } else { 2 };
+        nmp_board.swap_turn();
+        let score = -negamax(
+            &nmp_board,
+            ctx,
+            sf_rest,
+            depth - 1 - r,
+            -beta,
+            -(beta - 1),
+            ply + 1,
+            true,
+        );
+        if score >= beta {
+            return beta;
+        }
+    }
 
     // Generate legal moves
     board.generate_moves(moves);
@@ -93,17 +115,36 @@ pub fn negamax(
                 -alpha - 1,
                 -alpha,
                 ply + 1,
+                false,
             );
 
             // Re-search if reduced search beats alpha
             if reduced_score > alpha && !ctx.aborted {
-                -negamax(&next_board, ctx, sf_rest, depth - 1, -beta, -alpha, ply + 1)
+                -negamax(
+                    &next_board,
+                    ctx,
+                    sf_rest,
+                    depth - 1,
+                    -beta,
+                    -alpha,
+                    ply + 1,
+                    false,
+                )
             } else {
                 reduced_score
             }
         } else {
             // Normal search
-            -negamax(&next_board, ctx, sf_rest, depth - 1, -beta, -alpha, ply + 1)
+            -negamax(
+                &next_board,
+                ctx,
+                sf_rest,
+                depth - 1,
+                -beta,
+                -alpha,
+                ply + 1,
+                false,
+            )
         };
 
         if ctx.aborted {

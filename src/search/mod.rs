@@ -217,7 +217,16 @@ pub fn best_move(
 
         let mut next_board = *board;
         next_board.apply_move(m);
-        let score = -negamax(&next_board, &mut ctx, sf_rest, depth - 1, -beta, -alpha, 1);
+        let score = -negamax(
+            &next_board,
+            &mut ctx,
+            sf_rest,
+            depth - 1,
+            -beta,
+            -alpha,
+            1,
+            false,
+        );
 
         if ctx.aborted {
             break;
@@ -277,7 +286,16 @@ pub fn search_infinite(
 
             let mut next_board = *board;
             next_board.apply_move(m);
-            let score = -negamax(&next_board, &mut ctx, sf_rest, depth - 1, -beta, -alpha, 1);
+            let score = -negamax(
+                &next_board,
+                &mut ctx,
+                sf_rest,
+                depth - 1,
+                -beta,
+                -alpha,
+                1,
+                false,
+            );
 
             if ctx.aborted {
                 break;

@@ -238,6 +238,13 @@ impl Board {
     pub fn turn(&self) -> PieceColour {
         self.turn
     }
+
+    /// Allows NMP
+    pub fn swap_turn(&mut self) {
+        self.turn = self.turn.other();
+        self.hash ^= ZOBRIST.side_to_move;
+        self.en_passant = BitBoard::EMPTY;
+    }
 }
 
 #[cfg(test)]
