@@ -2,7 +2,9 @@ use crate::board::Board;
 use crate::chess::moves::Move;
 use crate::search::quiescence::quiescence;
 use crate::search::transposition::{TTFlag, score_from_tt, score_to_tt};
-use crate::search::{MATE, MAX_PLY, SearchContext, SearchFrame, pick_move, score_moves};
+use crate::search::{
+    MATE, MAX_HISTORY, MAX_PLY, SearchContext, SearchFrame, pick_move, score_moves,
+};
 
 /// https://chessprogramming.org/Negamax
 pub fn negamax(
@@ -75,13 +77,15 @@ pub fn negamax(
 
         if score >= beta {
             // Update killers and history
-            if !m.is_capture() && ctx.killers[ply_idx][0] != m {
-                ctx.killers[ply_idx][1] = ctx.killers[ply_idx][0];
-                ctx.killers[ply_idx][0] = m;
-            }
-            if !m.is_capture() {
-                ctx.history[board.turn() as usize][m.from().idx()][m.to().idx()] +=
-                    (depth as i32) * (depth as i32);
+            let is_quiet = !m.is_capture() && !m.is_promotion();
+            if is_quiet {
+                if ctx.killers[ply_idx][0] != m {
+                    ctx.killers[ply_idx][1] = ctx.killers[ply_idx][0];
+                    ctx.killers[ply_idx][0] = m;
+                }
+                let bonus = (depth as i32) * (depth as i32);
+                let hist = &mut ctx.history[board.turn() as usize][m.from().idx()][m.to().idx()];
+                *hist += bonus - (*hist * bonus.abs()) / MAX_HISTORY;
             }
 
             ctx.tt.store(

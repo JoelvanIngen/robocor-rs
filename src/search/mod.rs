@@ -1,3 +1,4 @@
+mod lmr;
 mod negamax;
 mod quiescence;
 mod transposition;
@@ -15,6 +16,7 @@ const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
 pub const MAX_PLY: usize = 64;
 const MATE_THRESHOLD: i32 = MATE - MAX_PLY as i32;
+const MAX_HISTORY: i32 = 16_384;
 
 /// Avoids having to repeatedly allocate and move data
 struct SearchFrame {
