@@ -39,8 +39,13 @@ impl UciReport {
             .collect::<Vec<_>>()
             .join(" ");
 
+        let elapsed = Instant::now() - self.start_time;
+
         // Use microseconds to prevent fast moves reporting inf nps
-        let nps = (self.nodes as u128 * 1_000_000) / (Instant::now() - self.start_time).as_micros();
+        let nps = (self.nodes as u128 * 1_000_000) / elapsed.as_micros();
+
+        // Stockfish seems to use milliseconds
+        let time = elapsed.as_millis();
 
         let mut s = String::from("info");
         s.push_str(format!(" depth {}", self.depth).as_str());
@@ -48,6 +53,7 @@ impl UciReport {
         s.push_str(format!(" nodes {}", self.nodes).as_str());
         s.push_str(format!(" nps {}", nps).as_str());
         s.push_str(format!(" hashfull {}", self.hashfull).as_str());
+        s.push_str(format!(" time {}", time).as_str());
         s.push_str(format!(" pv {}", pv_str).as_str());
         s
     }
