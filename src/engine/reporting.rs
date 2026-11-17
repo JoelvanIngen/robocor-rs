@@ -42,7 +42,7 @@ impl UciReport {
         let elapsed = Instant::now() - self.start_time;
 
         // Use microseconds to prevent fast moves reporting inf nps
-        let nps = (self.nodes as u128 * 1_000_000) / elapsed.as_micros();
+        let nps = (self.nodes as u128 * 1_000_000) / elapsed.as_micros().max(1);
 
         // Stockfish seems to use milliseconds
         let time = elapsed.as_millis();
