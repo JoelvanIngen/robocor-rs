@@ -89,7 +89,7 @@ impl TranspositionTable {
     }
 
     pub fn percent_full(&self) -> usize {
-        (self.stored * 100) / self.size
+        (self.stored * 1000) / self.size
     }
 }
 
