@@ -19,9 +19,15 @@ pub enum GoOptions {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PositionOptions {
+pub enum PositionInitType {
     StartPos,
     Fen(String),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PositionOptions {
+    pub init_type: PositionInitType,
+    pub moves: Option<Vec<String>>,
 }
 
 impl Command {
@@ -62,11 +68,11 @@ impl GoOptions {
 impl PositionOptions {
     fn parse(opts: &mut SplitWhitespace) -> Self {
         let subcommand = opts.next();
-        match subcommand {
-            Some("startpos") => PositionOptions::StartPos,
+        let init_type = match subcommand {
+            Some("startpos") => PositionInitType::StartPos,
             Some("fen") => {
                 let fen = opts.take(6).collect::<Vec<_>>().join(" ");
-                PositionOptions::Fen(fen)
+                PositionInitType::Fen(fen)
             }
             Some(s) => {
                 println!("unknown 'startpos' subcommand: {}", s);
@@ -76,7 +82,19 @@ impl PositionOptions {
                 println!("expected subcommand after 'startpos'");
                 exit(1);
             }
-        }
+        };
+
+        let subcommand = opts.next();
+        let moves = match subcommand {
+            Some("moves") => Some(opts.map(|s| s.to_string()).collect::<Vec<String>>()),
+            None => None,
+            Some(s) => {
+                println!("unknown 'position' subcommand: {}, expected 'moves'", s);
+                exit(1);
+            }
+        };
+
+        PositionOptions { init_type, moves }
     }
 }
 

@@ -95,6 +95,18 @@ impl Move {
     pub fn to_uci(&self) -> String {
         String::from(format!("{}{}", self.from(), self.to()))
     }
+
+    /// Uci uses q/r/b/n for promotion piece, this returns the move's promotion type in the
+    /// same way to allow quick comparison
+    pub fn promotion_piece_uci(&self) -> &str {
+        match self.kind() {
+            MoveKind::QueenPromotion | MoveKind::QueenPromotionCapture => "q",
+            MoveKind::RookPromotion | MoveKind::RookPromotionCapture => "r",
+            MoveKind::BishopPromotion | MoveKind::BishopPromotionCapture => "b",
+            MoveKind::KnightPromotion | MoveKind::KnightPromotionCapture => "n",
+            _ => panic!("attempted to retrieve uci promotion piece from a non-promotion move"),
+        }
+    }
 }
 
 impl Debug for Move {

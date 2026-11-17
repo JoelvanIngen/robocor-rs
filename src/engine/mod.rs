@@ -1,14 +1,16 @@
 mod reporting;
 
-use crate::board::Board;
+use crate::board::{Board, Square};
+use crate::chess::moves::MoveList;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
 use crate::search::search_infinite;
 use crate::uci::Command::{Go, Position};
 use crate::uci::GoOptions::Infinite;
-use crate::uci::PositionOptions::{Fen, StartPos};
+use crate::uci::PositionInitType::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
 use std::process::exit;
+use std::str::FromStr;
 use std::sync::mpsc::{Receiver, Sender};
 
 pub struct Engine {
@@ -48,13 +50,43 @@ impl Engine {
     }
 
     fn handle_position(&mut self, opts: PositionOptions) {
-        match opts {
+        match opts.init_type {
             Fen(fen) => {
                 self.board = Some(
                     Board::from_fen(fen.as_str()).unwrap_or_else(|e| self.handle_error(fen, e)),
                 )
             }
             StartPos => self.board = Some(Board::start_position()),
+        }
+
+        if let Some(moves) = opts.moves {
+            self.apply_moves(moves);
+        }
+    }
+
+    fn apply_moves(&mut self, moves: Vec<String>) {
+        let mut possible_moves = MoveList::new();
+        let board = self.board.as_mut().unwrap();
+
+        for m in &moves {
+            let start_sq = Square::from_str(&m[0..2]).expect("invalid uci start square");
+            let end_sq = Square::from_str(&m[2..4]).expect("invalid uci end square");
+            let prom = if m.len() == 5 { Some(&m[4..5]) } else { None };
+
+            board.generate_moves(&mut possible_moves);
+            possible_moves.retain(|test_m| test_m.from() == start_sq && test_m.to() == end_sq);
+
+            if let Some(p) = prom {
+                possible_moves.retain(|test_m| test_m.promotion_piece_uci() == p);
+            }
+
+            debug_assert!(
+                possible_moves.len() == 1,
+                "ambiguous moves from uci or no legal moves possible, possible moves: {:?}",
+                possible_moves
+            );
+
+            board.apply_move(possible_moves[0]);
         }
     }
 
