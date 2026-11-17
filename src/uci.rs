@@ -7,6 +7,7 @@ use std::thread::spawn;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Command {
     Uci,
+    UciNewGame,
     IsReady,
     Position(PositionOptions),
     Go(GoOptions),
@@ -40,6 +41,7 @@ impl Command {
 
         match cmd {
             "uci" => Command::Uci,
+            "ucinewgame" => Command::UciNewGame,
             "isready" => Command::IsReady,
             "position" => Command::Position(PositionOptions::parse(&mut tokens)),
             "go" => Command::Go(GoOptions::parse(&mut tokens)),

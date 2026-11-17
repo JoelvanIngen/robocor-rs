@@ -5,7 +5,7 @@ use crate::chess::moves::MoveList;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
 use crate::search::{TranspositionTable, search_infinite};
-use crate::uci::Command::{Go, Position};
+use crate::uci::Command::{Go, Position, UciNewGame};
 use crate::uci::GoOptions::Infinite;
 use crate::uci::PositionInitType::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
@@ -35,6 +35,7 @@ impl Engine {
     pub fn start(&mut self) {
         while let Ok(cmd) = self.uci_rx.recv() {
             match cmd {
+                UciNewGame => self.handle_new_game(),
                 Go(opts) => self.handle_go(opts),
                 Position(opts) => self.handle_position(opts),
                 cmd => {
