@@ -17,6 +17,7 @@ pub fn negamax(
     beta: i32,
     ply: u8,
     is_null_move: bool,
+    is_pv: bool,
 ) -> i32 {
     let (sf, sf_rest) = search_frames.split_first_mut().unwrap();
     let moves = &mut sf.moves;
@@ -38,7 +39,7 @@ pub fn negamax(
     let mut tt_move = Move::NULL;
     if let Some(entry) = ctx.tt.get(board.hash()) {
         tt_move = entry.best_move;
-        if entry.depth >= depth {
+        if !is_pv && entry.depth >= depth {
             let tt_score = score_from_tt(entry.score, ply);
             match entry.flag {
                 TTFlag::Exact => return tt_score,
@@ -56,9 +57,9 @@ pub fn negamax(
 
     // NMP
     // TODO: Add guards https://chessprogramming.org/Null_Move_Pruning
-    if !is_null_move && !in_check && beta.abs() < MATE_THRESHOLD && depth >= 4 {
+    if !is_pv && !is_null_move && !in_check && beta.abs() < MATE_THRESHOLD && depth >= 4 {
         let mut nmp_board = *board;
-        let r = if depth >= 6 { 3 } else { 2 };
+        let r = if depth >= 6 { 3 } else { 2 }; // Needs tuning
         nmp_board.swap_turn();
         let score = -negamax(
             &nmp_board,
@@ -69,7 +70,11 @@ pub fn negamax(
             -(beta - 1),
             ply + 1,
             true,
+            false,
         );
+        if ctx.aborted {
+            return alpha;
+        }
         if score >= beta {
             return beta;
         }
@@ -98,47 +103,38 @@ pub fn negamax(
         let mut next_board = *board;
         next_board.apply_move(m);
 
-        let score = if depth >= 3
+        let do_lmr = depth >= 3
             && i >= 3
             && !in_check
             && !m.is_capture()
             && !m.is_promotion()
             && !next_board.is_in_check()
             && m != ctx.killers[ply_idx][0]
-            && m != ctx.killers[ply_idx][1]
-        {
-            // Reduce depth for less-interesting moves
-            // Minimum of 2 to prevent jumping into quiescence
-            let r = lmr_reduction(depth, i).min(depth - 2);
-            let reduced_score = -negamax(
-                &next_board,
-                ctx,
-                sf_rest,
-                depth - 1 - r,
-                -alpha - 1,
-                -alpha,
-                ply + 1,
-                false,
-            );
+            && m != ctx.killers[ply_idx][1];
 
-            // Re-search if reduced search beats alpha
-            if reduced_score > alpha && !ctx.aborted {
-                -negamax(
-                    &next_board,
-                    ctx,
-                    sf_rest,
-                    depth - 1,
-                    -beta,
-                    -alpha,
-                    ply + 1,
-                    false,
-                )
-            } else {
-                reduced_score
-            }
+        let r = if do_lmr {
+            lmr_reduction(depth, i).min(depth - 2)
         } else {
-            // Normal search
-            -negamax(
+            0
+        };
+
+        // First move: full window with is_pv
+        // Later moves: scout with null move pruning
+        let mut score = -negamax(
+            &next_board,
+            ctx,
+            sf_rest,
+            depth - 1 - if i == 0 { 0 } else { r },
+            if i == 0 { -beta } else { -alpha - 1 },
+            -alpha,
+            ply + 1,
+            false,
+            i == 0 && is_pv,
+        );
+
+        // Re-visit if LMR failed high or PVS beat alpha
+        if i > 0 && score > alpha && !ctx.aborted && (r > 0 || (is_pv && score < beta)) {
+            score = -negamax(
                 &next_board,
                 ctx,
                 sf_rest,
@@ -147,8 +143,13 @@ pub fn negamax(
                 -alpha,
                 ply + 1,
                 false,
-            )
-        };
+                is_pv,
+            );
+        }
+
+        if ctx.aborted {
+            return alpha;
+        }
 
         if score >= beta {
             // Update killers and history

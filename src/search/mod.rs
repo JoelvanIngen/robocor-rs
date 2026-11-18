@@ -241,7 +241,8 @@ pub fn search_infinite(
 
             let mut next_board = *board;
             next_board.apply_move(m);
-            let score = -negamax(
+
+            let mut score = -negamax(
                 &next_board,
                 &mut ctx,
                 sf_rest,
@@ -250,7 +251,21 @@ pub fn search_infinite(
                 -alpha,
                 1,
                 false,
+                i == 0,
             );
+            if i > 0 && score > alpha && !ctx.should_abort() {
+                score = -negamax(
+                    &next_board,
+                    &mut ctx,
+                    sf_rest,
+                    depth - 1,
+                    -beta,
+                    -alpha,
+                    1,
+                    false,
+                    true,
+                )
+            }
 
             if ctx.should_abort() {
                 break;
