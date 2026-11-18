@@ -228,7 +228,7 @@ pub fn search_infinite(
 
     let mut best_move = moves[0];
 
-    for depth in 1..=MAX_PLY as u8 - 1 {
+    for depth in 1..=search_limits.max_depth {
         let mut alpha = -INF;
         let beta = INF;
         ctx.pv_len[0] = 0;
