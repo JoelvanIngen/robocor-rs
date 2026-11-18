@@ -5,7 +5,7 @@ use crate::chess::moves::MoveList;
 use crate::chess::piece::PieceColour;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
-use crate::search::{MAX_PLY, TranspositionTable, search_infinite};
+use crate::search::{MAX_PLY, TranspositionTable, search};
 use crate::uci::Command::{Go, Position, Stop, UciNewGame};
 use crate::uci::PositionInitType::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
@@ -164,7 +164,7 @@ impl Engine {
 
         let handle = thread::spawn(move || {
             let mut report = UciReport::new();
-            let best_move = search_infinite(
+            let best_move = search(
                 &board,
                 &mut tt,
                 &abort_clone,

@@ -204,7 +204,7 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
     }
 }
 
-pub fn search_infinite(
+pub fn search(
     board: &Board,
     tt: &mut TranspositionTable,
     abort_flag: &Arc<AtomicBool>,
