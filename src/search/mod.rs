@@ -272,11 +272,7 @@ pub fn search_infinite(
             }
         }
 
-        if ctx.should_abort()
-            || search_limits
-                .soft_deadline
-                .is_some_and(|d| Instant::now() >= d)
-        {
+        if ctx.should_abort() {
             break;
         }
 
@@ -290,6 +286,13 @@ pub fn search_infinite(
             ctx.root_pv(),
         );
         on_info(report);
+
+        if search_limits
+            .soft_deadline
+            .is_some_and(|d| Instant::now() >= d)
+        {
+            break;
+        }
     }
 
     Some(best_move)
