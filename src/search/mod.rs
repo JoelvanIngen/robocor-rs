@@ -14,7 +14,8 @@ pub use crate::search::transposition::TranspositionTable;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering::Relaxed;
-use std::time::Instant;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
 
 const INF: i32 = 1_000_000;
 const MATE: i32 = 100_000;
@@ -305,6 +306,16 @@ pub fn search_infinite(
             .is_some_and(|d| Instant::now() >= d)
         {
             break;
+        }
+    }
+
+    if search_limits.infinite {
+        // Wait for UCI stop command before returning best move
+        loop {
+            if ctx.should_abort() {
+                break;
+            }
+            sleep(Duration::from_millis(100));
         }
     }
 
