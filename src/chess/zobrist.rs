@@ -1,4 +1,4 @@
-use crate::board::{BitBoard, Square};
+use crate::board::BitBoard;
 use crate::chess::piece::PieceColour::Black;
 use crate::chess::piece::{PieceColour, PieceKind};
 
@@ -95,12 +95,4 @@ pub fn calculate_hash(
     }
 
     hash
-}
-
-/// Binds castling squares combination to (0..16) index
-pub fn castling_index(bb: BitBoard) -> usize {
-    (bb.is_set(Square::from_coords(0, 0)) as usize)
-        | ((bb.is_set(Square::from_coords(0, 7)) as usize) << 1)
-        | ((bb.is_set(Square::from_coords(7, 0)) as usize) << 2)
-        | ((bb.is_set(Square::from_coords(7, 7)) as usize) << 3)
 }

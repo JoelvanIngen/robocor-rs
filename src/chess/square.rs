@@ -3,18 +3,6 @@ use crate::error::NotationError::{InvalidNotation, InvalidSquare};
 use std::fmt::Display;
 use std::str::FromStr;
 
-/// Pre-init all squares on the board for cheap iteration
-pub const BOARD_SQUARES: [Square; 64] = {
-    let mut squares = [Square::from_index(0); 64];
-    let mut i = 0;
-    while i < 64 {
-        let square = Square::from_index(i);
-        squares[i] = square;
-        i += 1;
-    }
-    squares
-};
-
 /// row * 8 + col
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Square(u8);

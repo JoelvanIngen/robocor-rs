@@ -1,28 +1,18 @@
 use crate::board::Board;
-use crate::board::position::GameState::{Draw, Ongoing, Won};
 use crate::chess::bitboard::BitBoard;
+use crate::chess::moves::Move;
 use crate::chess::moves::MoveKind::{
     BishopPromotion, BishopPromotionCapture, DoublePawnPush, EnPassant, KingCastle,
     KnightPromotion, KnightPromotionCapture, QueenCastle, QueenPromotion, QueenPromotionCapture,
     RookPromotion, RookPromotionCapture,
 };
-use crate::chess::moves::{Move, MoveList};
 use crate::chess::piece::PieceColour::{Black, White};
-use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
+use crate::chess::piece::PieceKind::{Bishop, Knight, Pawn, Queen, Rook};
 use crate::chess::piece::{Piece, PieceColour, PieceKind};
 use crate::chess::square::Square;
 use crate::chess::zobrist::ZOBRIST;
 use crate::move_gen::CASTLING_MASK;
 use arrayvec::ArrayVec;
-
-type PieceList = ArrayVec<Piece, 32>;
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum GameState {
-    Ongoing,
-    Won(PieceColour),
-    Draw,
-}
 
 impl Board {
     #[inline(always)]
@@ -157,30 +147,6 @@ impl Board {
         self.update_hash();
     }
 
-    pub fn game_state(&self, moves: &mut MoveList) -> GameState {
-        if self.halfmove_clock > 100 {
-            return Draw;
-        }
-        if (self.colour_bitboards[0] | self.colour_bitboards[1]).count() == 2 {
-            // Only kings remain
-            return Draw;
-        }
-
-        self.generate_moves(moves);
-        if self.is_bb_attacked(self.turn, self.get_bitboard(Piece::new(King, self.turn)))
-            && moves.is_empty()
-        {
-            // Checkmate
-            return Won(self.turn.other());
-        }
-        if moves.is_empty() {
-            // Stalemate
-            return Draw;
-        }
-
-        Ongoing
-    }
-
     pub fn en_passant_square(&self) -> Option<Square> {
         match self.en_passant {
             BitBoard::EMPTY => None,
@@ -221,18 +187,6 @@ impl Board {
             }
         }
         options
-    }
-
-    pub fn get_pieces(&self) -> PieceList {
-        let mut pieces = PieceList::new();
-        for colour in PieceColour::ALL {
-            for kind in PieceKind::ALL {
-                for _ in 0..self.bitboards[colour as usize][kind as usize].count() {
-                    pieces.push(Piece::new(kind, colour));
-                }
-            }
-        }
-        pieces
     }
 
     pub fn turn(&self) -> PieceColour {
