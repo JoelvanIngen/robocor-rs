@@ -230,7 +230,6 @@ pub fn search_infinite(
     for depth in 1..=MAX_PLY as u8 - 1 {
         let mut alpha = -INF;
         let beta = INF;
-        let mut depth_best = best_move;
         ctx.pv_len[0] = 0;
 
         ctx.nodes += 1;
@@ -258,7 +257,7 @@ pub fn search_infinite(
             }
             if score > alpha {
                 alpha = score;
-                depth_best = m;
+                best_move = m;
                 ctx.update_pv(0, m);
                 update_report(
                     report,
@@ -276,7 +275,6 @@ pub fn search_infinite(
             break;
         }
 
-        best_move = depth_best;
         update_report(
             report,
             depth,
