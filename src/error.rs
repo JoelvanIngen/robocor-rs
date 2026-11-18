@@ -1,5 +1,6 @@
 use std::num::ParseIntError;
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum FenError {
     MissingField(String),
@@ -12,6 +13,7 @@ pub enum FenError {
     NotationError(NotationError),
 }
 
+#[allow(dead_code)]
 #[derive(Debug)]
 pub enum NotationError {
     InvalidSquare(String),
