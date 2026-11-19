@@ -12,6 +12,7 @@ pub enum Command {
     Position(PositionOptions),
     Go(GoOptions),
     Stop,
+    Quit,
     Unknown,
 }
 
@@ -53,6 +54,7 @@ impl Command {
             "position" => Command::Position(PositionOptions::parse(&mut tokens)),
             "go" => Command::Go(GoOptions::parse(&mut tokens)),
             "stop" => Command::Stop,
+            "quit" => Command::Quit,
             _ => Command::Unknown,
         }
     }
@@ -195,6 +197,7 @@ pub fn executor(engine_tx: Sender<Command>, engine_rx: Receiver<String>) {
                 println!("readyok");
                 stdout().flush().unwrap();
             }
+            Command::Quit => exit(0),
             Command::Unknown => {
                 println!("unknown command: {}", line);
                 exit(1);
