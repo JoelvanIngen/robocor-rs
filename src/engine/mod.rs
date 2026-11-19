@@ -6,7 +6,7 @@ use crate::chess::piece::PieceColour;
 pub use crate::engine::reporting::UciReport;
 use crate::error::FenError;
 use crate::search::{MAX_PLY, TranspositionTable, search};
-use crate::uci::Command::{Go, Position, Stop, UciNewGame};
+use crate::uci::Command::{Go, IsReady, Position, Stop, UciNewGame};
 use crate::uci::PositionInitType::{Fen, StartPos};
 use crate::uci::{Command, GoOptions, PositionOptions};
 use std::process::exit;
@@ -60,6 +60,12 @@ impl Engine {
         while let Ok(cmd) = self.uci_rx.recv() {
             match cmd {
                 UciNewGame => self.handle_new_game(),
+                // Can safely assume ready because if the engine thread were busy,
+                // it wouldn't be reading uci messages
+                IsReady => self
+                    .uci_tx
+                    .send("readyok".parse().unwrap())
+                    .expect("failed to send readyok to uci"),
                 Go(opts) => self.handle_go(opts),
                 Position(opts) => self.handle_position(opts),
                 Stop => self.handle_stop(),

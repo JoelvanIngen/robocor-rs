@@ -193,10 +193,6 @@ pub fn executor(engine_tx: Sender<Command>, engine_rx: Receiver<String>) {
                 println!("uciok");
                 stdout().flush().unwrap();
             }
-            Command::IsReady => {
-                println!("readyok");
-                stdout().flush().unwrap();
-            }
             Command::Quit => exit(0),
             Command::Unknown => {
                 println!("unknown command: {}", line);
