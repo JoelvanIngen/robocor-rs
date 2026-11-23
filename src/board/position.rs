@@ -209,7 +209,7 @@ impl Board {
     }
 
     pub fn sufficient_material(&self) -> bool {
-        return (self.colour_bitboards[0] & self.colour_bitboards[1]).count() > 2;
+        (self.colour_bitboards[0] | self.colour_bitboards[1]).count() > 2
     }
 }
 
