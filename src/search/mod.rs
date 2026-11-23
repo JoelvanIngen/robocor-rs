@@ -1,6 +1,7 @@
 mod lmr;
 mod negamax;
 mod quiescence;
+mod repetition;
 mod transposition;
 
 use crate::board::Board;
@@ -10,6 +11,7 @@ use crate::chess::piece::PieceKind;
 use crate::chess::piece::PieceKind::{Bishop, King, Knight, Pawn, Queen, Rook};
 use crate::engine::{SearchLimits, UciReport};
 use crate::search::negamax::negamax;
+use crate::search::repetition::RepetitionTable;
 pub use crate::search::transposition::TranspositionTable;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
@@ -60,14 +62,18 @@ struct SearchContext<'a> {
     // https://chessprogramming.org/History_Heuristic
     history: [[[i32; 64]; 64]; 2],
     tt: &'a mut TranspositionTable,
+    rep: RepetitionTable,
 }
 
 impl<'a> SearchContext<'a> {
     fn new(
         tt: &'a mut TranspositionTable,
+        prev_reps: Vec<u64>,
         abort_flag: &'a AtomicBool,
         hard_deadline: Option<Instant>,
+        current_hash: u64,
     ) -> SearchContext<'a> {
+        let rep = RepetitionTable::new(prev_reps, current_hash);
         Self {
             nodes: 0,
             aborted: false,
@@ -78,6 +84,7 @@ impl<'a> SearchContext<'a> {
             killers: [[Move::NULL; 2]; MAX_PLY],
             history: [[[0; MAX_PLY]; MAX_PLY]; 2],
             tt,
+            rep,
         }
     }
 
@@ -207,12 +214,19 @@ fn pick_move(moves: &mut MoveList, scores: &mut [i32; 256], idx: usize) {
 pub fn search(
     board: &Board,
     tt: &mut TranspositionTable,
+    history: Vec<u64>,
     abort_flag: &Arc<AtomicBool>,
     search_limits: SearchLimits,
     report: &mut UciReport,
     on_info: impl Fn(&UciReport),
 ) -> Option<Move> {
-    let mut ctx = SearchContext::new(tt, abort_flag, search_limits.hard_deadline);
+    let mut ctx = SearchContext::new(
+        tt,
+        history,
+        abort_flag,
+        search_limits.hard_deadline,
+        board.hash(),
+    );
     let mut search_frames: [SearchFrame; MAX_PLY] = std::array::from_fn(|_| SearchFrame::new());
 
     report.start_timer();
@@ -242,6 +256,8 @@ pub fn search(
 
             let mut next_board = *board;
             next_board.apply_move(m);
+
+            ctx.rep.push(next_board.hash());
 
             let mut score = -negamax(
                 &next_board,
@@ -285,6 +301,8 @@ pub fn search(
                 );
                 on_info(report);
             }
+
+            ctx.rep.pop();
         }
 
         if ctx.should_abort() {

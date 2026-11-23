@@ -203,6 +203,10 @@ impl Board {
     pub fn is_fifty_move_draw(&self) -> bool {
         self.halfmove_clock >= 100
     }
+
+    pub fn halfmove_clock(&self) -> u8 {
+        self.halfmove_clock
+    }
 }
 
 #[cfg(test)]

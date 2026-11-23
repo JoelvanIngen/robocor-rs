@@ -26,6 +26,21 @@ pub fn negamax(
     let ply_idx = ply as usize;
     ctx.pv_len[ply_idx] = 0; // Reset PV from prior branches
 
+    // Draw checks
+    if ctx.rep.is_repetition(board.halfmove_clock()) {
+        return 0;
+    }
+    if board.is_fifty_move_draw() {
+        if board.is_in_check() {
+            // Not draw if checkmate
+            board.generate_moves(moves);
+            if moves.is_empty() {
+                return -MATE + ply as i32;
+            }
+        }
+        return 0;
+    }
+
     if depth == 0 || ply_idx >= MAX_PLY - 1 {
         return quiescence(board, ctx, sf_rest, alpha, beta, ply);
     }
@@ -55,22 +70,11 @@ pub fn negamax(
 
     let in_check = board.is_in_check();
 
-    // 50 move rule
-    if board.is_fifty_move_draw() {
-        if in_check {
-            // Not draw if checkmate
-            board.generate_moves(moves);
-            if moves.is_empty() {
-                return -MATE + ply as i32;
-            }
-        }
-        return 0;
-    }
-
     // NMP
     // TODO: Add guards https://chessprogramming.org/Null_Move_Pruning
     if !is_pv && !is_null_move && !in_check && beta.abs() < MATE_THRESHOLD && depth >= 4 {
         let mut nmp_board = *board;
+        let prev_boundary = ctx.rep.push_null(nmp_board.hash());
         let r = if depth >= 6 { 3 } else { 2 }; // Needs tuning
         nmp_board.swap_turn();
         let score = -negamax(
@@ -84,6 +88,7 @@ pub fn negamax(
             true,
             false,
         );
+        ctx.rep.pop_null(prev_boundary);
         if ctx.aborted {
             return alpha;
         }
@@ -132,6 +137,7 @@ pub fn negamax(
 
         // First move: full window with is_pv
         // Later moves: scout with null move pruning
+        ctx.rep.push(next_board.hash());
         let mut score = -negamax(
             &next_board,
             ctx,
@@ -158,6 +164,7 @@ pub fn negamax(
                 is_pv,
             );
         }
+        ctx.rep.pop();
 
         if ctx.aborted {
             return alpha;

@@ -41,6 +41,7 @@ pub struct Engine {
     uci_tx: Sender<String>,
     uci_rx: Receiver<Command>,
     board: Option<Board>,
+    history: Vec<u64>,
     tt: Option<TranspositionTable>,
     active_search: Option<ActiveSearch>,
 }
@@ -51,6 +52,7 @@ impl Engine {
             uci_tx,
             uci_rx,
             board: None,
+            history: Vec::new(),
             tt: Some(TranspositionTable::new(1 << DEFAULT_TT_SHIFT)),
             active_search: None,
         }
@@ -132,6 +134,7 @@ impl Engine {
                 possible_moves
             );
 
+            self.history.push(board.hash());
             board.apply_move(possible_moves[0]);
         }
     }
@@ -162,6 +165,7 @@ impl Engine {
             .tt
             .take()
             .expect("transposition table missing in engine");
+        let history = self.history.clone();
         let abort = Arc::new(AtomicBool::new(false));
         let abort_clone = Arc::clone(&abort);
         let uci_tx = self.uci_tx.clone();
@@ -173,6 +177,7 @@ impl Engine {
             let best_move = search(
                 &board,
                 &mut tt,
+                history,
                 &abort_clone,
                 search_limits,
                 &mut report,
