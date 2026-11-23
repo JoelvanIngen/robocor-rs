@@ -199,6 +199,10 @@ impl Board {
         self.hash ^= ZOBRIST.side_to_move;
         self.en_passant = BitBoard::EMPTY;
     }
+
+    pub fn is_fifty_move_draw(&self) -> bool {
+        self.halfmove_clock >= 100
+    }
 }
 
 #[cfg(test)]

@@ -55,6 +55,18 @@ pub fn negamax(
 
     let in_check = board.is_in_check();
 
+    // 50 move rule
+    if board.is_fifty_move_draw() {
+        if in_check {
+            // Not draw if checkmate
+            board.generate_moves(moves);
+            if moves.is_empty() {
+                return -MATE + ply as i32;
+            }
+        }
+        return 0;
+    }
+
     // NMP
     // TODO: Add guards https://chessprogramming.org/Null_Move_Pruning
     if !is_pv && !is_null_move && !in_check && beta.abs() < MATE_THRESHOLD && depth >= 4 {
