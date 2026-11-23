@@ -329,10 +329,7 @@ pub fn search(
 
     if search_limits.infinite {
         // Wait for UCI stop command before returning best move
-        loop {
-            if ctx.should_abort() {
-                break;
-            }
+        while !ctx.abort_flag.load(Relaxed) {
             sleep(Duration::from_millis(100));
         }
     }
