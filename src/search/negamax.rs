@@ -40,6 +40,9 @@ pub fn negamax(
         }
         return 0;
     }
+    if !board.sufficient_material() {
+        return 0;
+    }
 
     if depth == 0 || ply_idx >= MAX_PLY - 1 {
         return quiescence(board, ctx, sf_rest, alpha, beta, ply);
